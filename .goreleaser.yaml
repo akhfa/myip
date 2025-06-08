@@ -179,7 +179,7 @@ nfpms:
     description: |-
       IP Detector - A simple HTTP service to detect client IP addresses
       with support for various proxy headers and detailed IP information.
-    license: "MIT"
+    license: "AGPL-3.0"
     formats:
       - deb
       - rpm
@@ -207,7 +207,7 @@ brews:
     folder: Formula
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/{{ .ProjectName }}"
     description: "IP Detector - A simple HTTP service to detect client IP addresses"
-    license: "MIT"
+    license: "AGPL-3.0"
     test: |
       system "#{bin}/ip-detector --version"
     install: |-
@@ -219,7 +219,7 @@ aurs:
     description: "IP Detector - A simple HTTP service to detect client IP addresses"
     maintainers:
       - "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
-    license: "MIT"
+    license: "AGPL-3.0"
     private_key: "{{ .Env.AUR_KEY }}"
     git_url: "ssh://aur@aur.archlinux.org/ip-detector-bin.git"
     package: |-
@@ -232,7 +232,7 @@ aurs:
 winget:
   - name: ip-detector
     publisher: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
-    license: "MIT"
+    license: "AGPL-3.0"
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/{{ .ProjectName }}"
     short_description: "IP Detector - A simple HTTP service to detect client IP addresses"
     repository:

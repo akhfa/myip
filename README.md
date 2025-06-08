@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/your-username/ip-detector/workflows/Release/badge.svg)](https://github.com/your-username/ip-detector/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/your-username/ip-detector)](https://goreportcard.com/report/github.com/your-username/ip-detector)
 [![codecov](https://codecov.io/gh/your-username/ip-detector/branch/main/graph/badge.svg)](https://codecov.io/gh/your-username/ip-detector)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/your-username/ip-detector)](https://github.com/your-username/ip-detector/pkgs/container/ip-detector)
 
 A lightweight, fast HTTP service for detecting client IP addresses with comprehensive proxy header support and detailed IP information.
@@ -301,7 +301,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Support
 
