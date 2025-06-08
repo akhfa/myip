@@ -31,4 +31,22 @@ go.work.sum
 # .idea/
 # .vscode/
 
-ip-detector
+# Build artifacts
+myip
+build/
+dist/
+
+# GoReleaser artifacts
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+*.apk
+checksums.txt
+
+# Docker build context
+.dockerignore
+
+# Temporary files
+*.tmp
+*.log
