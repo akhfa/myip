@@ -1,7 +1,7 @@
 # Makefile for IP Detector
 
 # Variables
-BINARY_NAME=ip-detector
+BINARY_NAME=myip
 VERSION?=dev
 COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 DATE=$(shell date -u '+%Y-%m-%d_%H:%M:%S')

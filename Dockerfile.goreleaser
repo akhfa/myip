@@ -1,12 +1,12 @@
 FROM scratch
 
-COPY ip-detector /ip-detector
+COPY myip /myip
 COPY LICENSE /LICENSE
 COPY README.md /README.md
 
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD ["/ip-detector", "-health-check"] || exit 1
+  CMD ["/myip", "-health-check"] || exit 1
 
-ENTRYPOINT ["/ip-detector"]
+ENTRYPOINT ["/myip"]

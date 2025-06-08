@@ -1,6 +1,6 @@
 version: 2
 
-project_name: ip-detector
+project_name: myip
 
 before:
   hooks:
@@ -9,7 +9,7 @@ before:
 
 builds:
   - main: ./main.go
-    binary: ip-detector
+    binary: myip
     env:
       - CGO_ENABLED=0
     goos:
@@ -154,8 +154,8 @@ release:
     
     ### Download binary
     1. Download the appropriate binary for your platform from the assets below
-    2. Make it executable: `chmod +x ip-detector`
-    3. Run: `./ip-detector`
+    2. Make it executable: `chmod +x myip`
+    3. Run: `./myip`
     
     ### Docker
     ```bash
@@ -171,7 +171,7 @@ release:
 
 nfpms:
   - id: packages
-    package_name: ip-detector
+    package_name: myip
     file_name_template: "{{ .ConventionalFileName }}"
     vendor: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/{{ .ProjectName }}"
@@ -190,16 +190,16 @@ nfpms:
       - git
     contents:
       - src: ./LICENSE
-        dst: /usr/share/doc/ip-detector/copyright
+        dst: /usr/share/doc/myip/copyright
         file_info:
           mode: 0644
       - src: ./README.md
-        dst: /usr/share/doc/ip-detector/README.md
+        dst: /usr/share/doc/myip/README.md
         file_info:
           mode: 0644
 
 brews:
-  - name: ip-detector
+  - name: myip
     repository:
       owner: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
       name: homebrew-tap
@@ -209,28 +209,28 @@ brews:
     description: "IP Detector - A simple HTTP service to detect client IP addresses"
     license: "AGPL-3.0"
     test: |
-      system "#{bin}/ip-detector --version"
+      system "#{bin}/myip --version"
     install: |-
-      bin.install "ip-detector"
+      bin.install "myip"
 
 aurs:
-  - name: ip-detector-bin
+  - name: myip-bin
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/{{ .ProjectName }}"
     description: "IP Detector - A simple HTTP service to detect client IP addresses"
     maintainers:
       - "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
     license: "AGPL-3.0"
     private_key: "{{ .Env.AUR_KEY }}"
-    git_url: "ssh://aur@aur.archlinux.org/ip-detector-bin.git"
+    git_url: "ssh://aur@aur.archlinux.org/myip-bin.git"
     package: |-
       # bin
-      install -Dm755 "./ip-detector" "${pkgdir}/usr/bin/ip-detector"
+      install -Dm755 "./myip" "${pkgdir}/usr/bin/myip"
       
       # license
-      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/ip-detector/LICENSE"
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/myip/LICENSE"
 
 winget:
-  - name: ip-detector
+  - name: myip
     publisher: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
     license: "AGPL-3.0"
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/{{ .ProjectName }}"

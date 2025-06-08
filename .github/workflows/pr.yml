@@ -81,11 +81,11 @@ jobs:
 
     - name: Build for multiple platforms
       run: |
-        GOOS=linux GOARCH=amd64 go build -o build/ip-detector-linux-amd64 .
-        GOOS=linux GOARCH=arm64 go build -o build/ip-detector-linux-arm64 .
-        GOOS=darwin GOARCH=amd64 go build -o build/ip-detector-darwin-amd64 .
-        GOOS=darwin GOARCH=arm64 go build -o build/ip-detector-darwin-arm64 .
-        GOOS=windows GOARCH=amd64 go build -o build/ip-detector-windows-amd64.exe .
+        GOOS=linux GOARCH=amd64 go build -o build/myip-linux-amd64 .
+        GOOS=linux GOARCH=arm64 go build -o build/myip-linux-arm64 .
+        GOOS=darwin GOARCH=amd64 go build -o build/myip-darwin-amd64 .
+        GOOS=darwin GOARCH=arm64 go build -o build/myip-darwin-arm64 .
+        GOOS=windows GOARCH=amd64 go build -o build/myip-windows-amd64.exe .
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -111,6 +111,6 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64
         push: false
-        tags: ip-detector:pr-${{ github.event.number }}
+        tags: myip:pr-${{ github.event.number }}
         cache-from: type=gha
         cache-to: type=gha,mode=max

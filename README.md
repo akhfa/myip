@@ -1,10 +1,10 @@
 # IP Detector
 
-[![Build Status](https://github.com/your-username/ip-detector/workflows/Release/badge.svg)](https://github.com/your-username/ip-detector/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/your-username/ip-detector)](https://goreportcard.com/report/github.com/your-username/ip-detector)
-[![codecov](https://codecov.io/gh/your-username/ip-detector/branch/main/graph/badge.svg)](https://codecov.io/gh/your-username/ip-detector)
+[![Build Status](https://github.com/akhfa/myip/workflows/Release/badge.svg)](https://github.com/akhfa/myip/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/akhfa/myip)](https://goreportcard.com/report/github.com/akhfa/myip)
+[![codecov](https://codecov.io/gh/akhfa/myip/branch/main/graph/badge.svg)](https://codecov.io/gh/akhfa/myip)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/your-username/ip-detector)](https://github.com/your-username/ip-detector/pkgs/container/ip-detector)
+[![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/akhfa/myip)](https://github.com/akhfa/myip/pkgs/container/myip)
 
 A lightweight, fast HTTP service for detecting client IP addresses with comprehensive proxy header support and detailed IP information.
 
@@ -25,7 +25,7 @@ A lightweight, fast HTTP service for detecting client IP addresses with comprehe
 
 ```bash
 # Run with Docker
-docker run -p 8080:8080 ghcr.io/your-username/ip-detector:latest
+docker run -p 8080:8080 ghcr.io/akhfa/myip:latest
 
 # Test the service
 curl http://localhost:8080
@@ -34,13 +34,13 @@ curl http://localhost:8080
 ### Using Go Install
 
 ```bash
-go install github.com/your-username/ip-detector@latest
-ip-detector
+go install github.com/akhfa/myip@latest
+myip
 ```
 
 ### Download Binary
 
-Download the latest binary from the [releases page](https://github.com/your-username/ip-detector/releases).
+Download the latest binary from the [releases page](https://github.com/akhfa/myip/releases).
 
 ## API Endpoints
 
@@ -123,8 +123,8 @@ IP Detector analyzes the following headers in order of priority:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/ip-detector.git
-cd ip-detector
+git clone https://github.com/akhfa/myip.git
+cd myip
 
 # Install dependencies
 make deps
@@ -190,13 +190,13 @@ Images are available for:
 
 ```bash
 # Latest stable release
-docker pull ghcr.io/your-username/ip-detector:latest
+docker pull ghcr.io/akhfa/myip:latest
 
 # Specific version
-docker pull ghcr.io/your-username/ip-detector:v1.0.0
+docker pull ghcr.io/akhfa/myip:v1.0.0
 
 # Development build
-docker pull ghcr.io/your-username/ip-detector:main
+docker pull ghcr.io/akhfa/myip:main
 ```
 
 ### Docker Compose
@@ -204,15 +204,15 @@ docker pull ghcr.io/your-username/ip-detector:main
 ```yaml
 version: '3.8'
 services:
-  ip-detector:
-    image: ghcr.io/your-username/ip-detector:latest
+  myip:
+    image: ghcr.io/akhfa/myip:latest
     ports:
       - "8080:8080"
     environment:
       - PORT=8080
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "/ip-detector", "-health-check"]
+      test: ["CMD", "/myip", "-health-check"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -226,20 +226,20 @@ services:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ip-detector
+  name: myip
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: ip-detector
+      app: myip
   template:
     metadata:
       labels:
-        app: ip-detector
+        app: myip
     spec:
       containers:
-      - name: ip-detector
-        image: ghcr.io/your-username/ip-detector:latest
+      - name: myip
+        image: ghcr.io/akhfa/myip:latest
         ports:
         - containerPort: 8080
         env:
@@ -255,10 +255,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ip-detector-service
+  name: myip-service
 spec:
   selector:
-    app: ip-detector
+    app: myip
   ports:
   - protocol: TCP
     port: 80
@@ -306,8 +306,8 @@ This project is licensed under the GNU Affero General Public License v3.0 - see 
 ## Support
 
 - 📖 **Documentation**: Check our [docs](docs/) directory
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/your-username/ip-detector/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/your-username/ip-detector/discussions)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/akhfa/myip/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/akhfa/myip/discussions)
 - 🔒 **Security Issues**: Please email security@example.com
 
 ## Acknowledgments

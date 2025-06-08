@@ -11,7 +11,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags='-w -s -extldflags "-static"' \
     -a -installsuffix cgo \
-    -o ip-detector .
+    -o myip .
 
 FROM scratch
 
@@ -19,13 +19,13 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/passwd /etc/passwd
 
-COPY --from=builder /build/ip-detector /ip-detector
+COPY --from=builder /build/myip /myip
 
 USER appuser
 
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD ["/ip-detector", "-health-check"] || exit 1
+  CMD ["/myip", "-health-check"] || exit 1
 
-ENTRYPOINT ["/ip-detector"]
+ENTRYPOINT ["/myip"]

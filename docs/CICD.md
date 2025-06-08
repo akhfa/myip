@@ -196,19 +196,19 @@ Recommended branch protection rules for `master`/`main`:
 ### Pulling Images
 ```bash
 # Latest version
-docker pull ghcr.io/[username]/ip-detector:latest
+docker pull ghcr.io/[username]/myip:latest
 
 # Specific version
-docker pull ghcr.io/[username]/ip-detector:v1.0.0
+docker pull ghcr.io/[username]/myip:v1.0.0
 ```
 
 ### Running Containers
 ```bash
 # Basic usage
-docker run -p 8080:8080 ghcr.io/[username]/ip-detector:latest
+docker run -p 8080:8080 ghcr.io/[username]/myip:latest
 
 # With environment variables
-docker run -p 8080:8080 -e PORT=3000 ghcr.io/[username]/ip-detector:latest
+docker run -p 8080:8080 -e PORT=3000 ghcr.io/[username]/myip:latest
 ```
 
 ## Monitoring and Troubleshooting
