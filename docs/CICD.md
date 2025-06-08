@@ -1,6 +1,6 @@
 # CI/CD Pipeline Documentation
 
-This document describes the comprehensive CI/CD pipeline setup for the IP Detector Go application using GitHub Actions and GoReleaser.
+This document describes the comprehensive CI/CD pipeline setup for the My IP Go application using GitHub Actions and GoReleaser.
 
 ## Overview
 

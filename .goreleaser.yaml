@@ -139,9 +139,9 @@ release:
   prerelease: auto
   mode: replace
   header: |
-    ## IP Detector {{ .Tag }} ({{ .Date }})
+    ## My IP {{ .Tag }} ({{ .Date }})
     
-    Welcome to this new release of IP Detector!
+    Welcome to this new release of My IP!
 
   footer: |
     ## Docker Images
@@ -177,7 +177,7 @@ nfpms:
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/{{ .ProjectName }}"
     maintainer: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
     description: |-
-      IP Detector - A simple HTTP service to detect client IP addresses
+      My IP - A simple HTTP service to detect client IP addresses
       with support for various proxy headers and detailed IP information.
     license: "AGPL-3.0"
     formats:

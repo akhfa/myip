@@ -1,4 +1,4 @@
-# Makefile for IP Detector
+# Makefile for My IP
 
 # Variables
 BINARY_NAME=myip

@@ -1,4 +1,4 @@
-# IP Detector
+# My IP
 
 [![Build Status](https://github.com/akhfa/myip/workflows/Release/badge.svg)](https://github.com/akhfa/myip/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/akhfa/myip)](https://goreportcard.com/report/github.com/akhfa/myip)
@@ -95,7 +95,7 @@ $ curl https://ip.example.com/json
 
 ## Supported Headers
 
-IP Detector analyzes the following headers in order of priority:
+My IP analyzes the following headers in order of priority:
 
 1. `CF-Connecting-IP` (Cloudflare)
 2. `True-Client-IP` (Cloudflare Enterprise)
