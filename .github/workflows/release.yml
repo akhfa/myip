@@ -62,7 +62,7 @@ jobs:
       with:
         file: ./coverage.out
         flags: unittests
-        name: codecov-umbrella
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   docker:
     name: Build and Push Docker Image
