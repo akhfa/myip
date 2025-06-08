@@ -47,14 +47,18 @@ func main() {
 		port = "8080"
 	}
 
-	http.HandleFunc("/", ipHandler)
+	http.HandleFunc("/", ipv4Handler)           // IPv4 only
+	http.HandleFunc("/ipv6", ipv6Handler)       // IPv6 only
+	http.HandleFunc("/info", infoHandler)       // Detailed info (old "/" response)
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/json", jsonHandler)
 	http.HandleFunc("/headers", headersHandler)
 
 	fmt.Printf("Server starting on port %s\n", port)
 	fmt.Printf("Endpoints:\n")
-	fmt.Printf("  GET /       - Simple IP display\n")
+	fmt.Printf("  GET /       - IPv4 address only\n")
+	fmt.Printf("  GET /ipv6   - IPv6 address only (404 if not available)\n")
+	fmt.Printf("  GET /info   - Detailed IP information\n")
 	fmt.Printf("  GET /json   - Detailed JSON response\n")
 	fmt.Printf("  GET /headers - All headers display\n")
 	fmt.Printf("  GET /health - Health check\n\n")
@@ -62,8 +66,46 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-// Simple IP display handler
-func ipHandler(w http.ResponseWriter, r *http.Request) {
+// IPv4 only handler
+func ipv4Handler(w http.ResponseWriter, r *http.Request) {
+	clientIP, _ := extractClientIP(r)
+	
+	// Check if it's a valid IPv4 address
+	ip := net.ParseIP(clientIP)
+	if ip == nil {
+		http.Error(w, "Invalid IP address", http.StatusInternalServerError)
+		return
+	}
+	
+	// Check if it's IPv4
+	if ip.To4() == nil {
+		// It's IPv6, try to find IPv4
+		ipv4 := findIPv4(r)
+		if ipv4 == "" {
+			http.Error(w, "No IPv4 address found", http.StatusNotFound)
+			return
+		}
+		clientIP = ipv4
+	}
+	
+	w.Header().Set("Content-Type", "text/plain")
+	fmt.Fprint(w, clientIP)
+}
+
+// IPv6 only handler
+func ipv6Handler(w http.ResponseWriter, r *http.Request) {
+	ipv6 := findIPv6(r)
+	if ipv6 == "" {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "text/plain")
+	fmt.Fprint(w, ipv6)
+}
+
+// Detailed IP information handler (old "/" response)
+func infoHandler(w http.ResponseWriter, r *http.Request) {
 	ipInfo := getIPInfo(r)
 	
 	w.Header().Set("Content-Type", "text/plain")
@@ -72,6 +114,17 @@ func ipHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Detection Method: %s\n", ipInfo.DetectedVia)
 	fmt.Fprintf(w, "Is Private IP: %t\n", ipInfo.IsPrivateIP)
 	fmt.Fprintf(w, "Behind Cloudflare: %t\n", ipInfo.IsCloudflare)
+	
+	// Show IPv4 and IPv6 separately
+	ipv4 := findIPv4(r)
+	ipv6 := findIPv6(r)
+	
+	if ipv4 != "" {
+		fmt.Fprintf(w, "IPv4 Address: %s\n", ipv4)
+	}
+	if ipv6 != "" {
+		fmt.Fprintf(w, "IPv6 Address: %s\n", ipv6)
+	}
 	
 	if len(ipInfo.ProxyChain) > 0 {
 		fmt.Fprintf(w, "Proxy Chain: %s\n", strings.Join(ipInfo.ProxyChain, " → "))
@@ -84,10 +137,21 @@ func ipHandler(w http.ResponseWriter, r *http.Request) {
 func jsonHandler(w http.ResponseWriter, r *http.Request) {
 	ipInfo := getIPInfo(r)
 	
+	// Add IPv4 and IPv6 specific fields
+	enrichedInfo := struct {
+		*IPInfo
+		IPv4Address string `json:"ipv4_address,omitempty"`
+		IPv6Address string `json:"ipv6_address,omitempty"`
+	}{
+		IPInfo:      ipInfo,
+		IPv4Address: findIPv4(r),
+		IPv6Address: findIPv6(r),
+	}
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	
-	if err := json.NewEncoder(w).Encode(ipInfo); err != nil {
+	if err := json.NewEncoder(w).Encode(enrichedInfo); err != nil {
 		http.Error(w, "Error encoding JSON", http.StatusInternalServerError)
 		return
 	}
@@ -110,6 +174,15 @@ func headersHandler(w http.ResponseWriter, r *http.Request) {
 	
 	ipInfo := getIPInfo(r)
 	fmt.Fprintf(w, "\nDetected IP: %s (via %s)\n", ipInfo.ClientIP, ipInfo.DetectedVia)
+	
+	ipv4 := findIPv4(r)
+	ipv6 := findIPv6(r)
+	if ipv4 != "" {
+		fmt.Fprintf(w, "IPv4: %s\n", ipv4)
+	}
+	if ipv6 != "" {
+		fmt.Fprintf(w, "IPv6: %s\n", ipv6)
+	}
 }
 
 // Health check handler
@@ -120,6 +193,87 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		"status": "healthy",
 		"time":   time.Now().Format(time.RFC3339),
 	})
+}
+
+// Find IPv4 address from request
+func findIPv4(r *http.Request) string {
+	// Check all possible IP sources
+	allIPs := getAllPossibleIPs(r)
+	
+	for _, ip := range allIPs {
+		parsedIP := net.ParseIP(ip)
+		if parsedIP != nil && parsedIP.To4() != nil {
+			return ip
+		}
+	}
+	
+	return ""
+}
+
+// Find IPv6 address from request
+func findIPv6(r *http.Request) string {
+	// Check all possible IP sources
+	allIPs := getAllPossibleIPs(r)
+	
+	for _, ip := range allIPs {
+		parsedIP := net.ParseIP(ip)
+		if parsedIP != nil && parsedIP.To4() == nil {
+			// It's IPv6, but let's clean it up (remove brackets if present)
+			cleanIP := strings.Trim(ip, "[]")
+			if net.ParseIP(cleanIP) != nil {
+				return cleanIP
+			}
+		}
+	}
+	
+	return ""
+}
+
+// Get all possible IPs from various headers and sources
+func getAllPossibleIPs(r *http.Request) []string {
+	var ips []string
+	
+	// Check all headers
+	for _, header := range ipHeaders {
+		value := r.Header.Get(header)
+		if value != "" {
+			// Handle comma-separated IPs
+			headerIPs := strings.Split(value, ",")
+			for _, ip := range headerIPs {
+				cleanIP := strings.TrimSpace(ip)
+				if isValidIP(cleanIP) {
+					ips = append(ips, cleanIP)
+				}
+			}
+		}
+	}
+	
+	// Add RemoteAddr
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		if isValidIP(host) {
+			ips = append(ips, host)
+		}
+	} else if isValidIP(r.RemoteAddr) {
+		ips = append(ips, r.RemoteAddr)
+	}
+	
+	// Remove duplicates
+	return removeDuplicates(ips)
+}
+
+// Remove duplicate IPs
+func removeDuplicates(ips []string) []string {
+	keys := make(map[string]bool)
+	var result []string
+	
+	for _, ip := range ips {
+		if !keys[ip] {
+			keys[ip] = true
+			result = append(result, ip)
+		}
+	}
+	
+	return result
 }
 
 // Main function to extract IP information
