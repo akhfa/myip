@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/akhfa/myip)](https://goreportcard.com/report/github.com/akhfa/myip)
 [![codecov](https://codecov.io/gh/akhfa/myip/branch/main/graph/badge.svg)](https://codecov.io/gh/akhfa/myip)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/akhfa/myip)](https://github.com/akhfa/myip/pkgs/container/myip)
+[![Docker Pulls](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://github.com/akhfa/myip/pkgs/container/myip)
 
 A lightweight, fast HTTP service for detecting client IP addresses with comprehensive proxy header support and detailed IP information.
 
