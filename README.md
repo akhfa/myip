@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/akhfa/myip)](https://goreportcard.com/report/github.com/akhfa/myip)
 [![codecov](https://codecov.io/gh/akhfa/myip/branch/main/graph/badge.svg)](https://codecov.io/gh/akhfa/myip)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/akhfa/myip)](https://github.com/akhfa/myip/pkgs/container/myip)
+[![Docker Pulls](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://github.com/akhfa/myip/pkgs/container/myip)
 
 A lightweight, fast HTTP service for detecting client IP addresses with comprehensive proxy header support and detailed IP information.
 
@@ -115,7 +115,7 @@ My IP analyzes the following headers in order of priority:
 
 ### Prerequisites
 
-- Go 1.24 or later
+- Go 1.24.1 or later
 - Make (optional, for using Makefile)
 - Docker (optional, for containerization)
 
@@ -144,37 +144,60 @@ make run
 ```bash
 make help          # Show all available commands
 make build         # Build the application
+make run           # Run the application
+make dev           # Run with hot reload (requires air)
 make test          # Run tests
+make test-race     # Run tests with race detector
 make test-cover    # Run tests with coverage
+make bench         # Run benchmarks
+make fmt           # Format code
+make vet           # Run go vet
+make lint          # Run golint
+make staticcheck   # Run staticcheck
 make check         # Run all code quality checks
+make build-all     # Build for all platforms
 make docker-build  # Build Docker image
+make docker-run    # Run Docker container
 make clean         # Clean build artifacts
+make deps          # Download and verify dependencies
+make tidy          # Tidy dependencies
+make install       # Install the application
+make security      # Run security checks
 ```
 
 ## CI/CD Pipeline
 
-This project features a comprehensive CI/CD pipeline with:
+This project features a comprehensive CI/CD pipeline with two main workflows:
 
 ### Pull Request Workflow
-- ✅ Automated testing and code quality checks
+- ✅ Comprehensive testing (unit tests, race detection, benchmarks)
 - 🔍 Static analysis with `staticcheck` and `golint`
-- 🏗️ Multi-platform build verification
+- 🏗️ Multi-platform build verification (Linux, macOS, Windows)
 - 🐳 Docker image build validation
-- 📊 Code coverage reporting
+- 📊 Code coverage reporting with Codecov integration
+- 🛡️ Security scanning with Gosec
 
 ### Release Workflow
-- 🚀 Automated releases with GoReleaser
-- 🐳 Multi-architecture Docker images (amd64, arm64)
+- 🚀 **Snapshot builds** on pushes to `main` branch (Docker images only)
+- 🎯 **Tagged releases** with full publishing pipeline
+- 🐳 Multi-architecture Docker images (amd64, arm64) on GHCR
 - 📦 Package generation (deb, rpm, apk)
 - 🔐 Artifact signing with Cosign
 - 🛡️ Security scanning with Gosec and Trivy
 - 📋 SBOM (Software Bill of Materials) generation
+- 🔄 Automatic package manager publishing
 
 ### Supported Package Managers
 - 🍺 **Homebrew** (macOS/Linux)
 - 📦 **AUR** (Arch Linux)
 - 🪟 **Winget** (Windows)
 - 🐧 **APT/YUM/APK** (Linux distributions)
+
+### Container Registry
+All Docker images are published to GitHub Container Registry (GHCR):
+- `main` and `latest` tags for main branch builds
+- `v*` tags for release builds
+- `commit-<sha>` tags for specific commits
 
 For detailed CI/CD documentation, see [docs/CICD.md](docs/CICD.md).
 
@@ -212,10 +235,11 @@ services:
       - PORT=8080
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "/myip", "-health-check"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 3s
       retries: 3
+      start_period: 5s
 ```
 
 ## Deployment
@@ -272,18 +296,21 @@ The service works seamlessly behind Cloudflare with proper `CF-Connecting-IP` he
 
 ## Security
 
-- 🔒 **Input Validation**: All IP addresses are validated before processing
-- 🛡️ **Header Sanitization**: Prevents header injection attacks
-- 🚫 **No External Dependencies**: Minimal attack surface
-- 📋 **Security Scanning**: Automated vulnerability scanning in CI/CD
-- ✍️ **Signed Releases**: All releases are signed with Cosign
+- 🔒 **Input Validation**: Comprehensive IP address validation and sanitization
+- 🛡️ **Header Analysis**: Safe parsing of proxy headers with injection protection
+- 🚫 **Zero Dependencies**: No external dependencies, minimal attack surface
+- � **Private IP Detection**: Identifies private IP ranges (RFC 1918, 3927, 5735, 4193, 4291)
+- �📋 **Security Scanning**: Automated vulnerability scanning with Gosec and Trivy in CI/CD
+- ✍️ **Signed Releases**: All releases and Docker images are signed with Cosign
+- 🛡️ **SARIF Integration**: Security findings integrated with GitHub Security tab
 
 ## Performance
 
-- ⚡ **Low Latency**: < 1ms response time for simple requests
-- 🎯 **Low Memory**: < 10MB memory footprint
-- 📈 **High Throughput**: Handles thousands of requests per second
-- 🔄 **Concurrent Safe**: Full goroutine safety
+- ⚡ **Low Latency**: Sub-millisecond response times for simple requests
+- 🎯 **Low Memory**: Minimal memory footprint (< 10MB)
+- 📈 **High Throughput**: Optimized for thousands of concurrent requests
+- 🔄 **Concurrent Safe**: Full goroutine safety with no external dependencies
+- 🚀 **Zero Dependencies**: Pure Go standard library implementation
 
 ## Contributing
 
@@ -308,7 +335,7 @@ This project is licensed under the GNU Affero General Public License v3.0 - see 
 - 📖 **Documentation**: Check our [docs](docs/) directory
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/akhfa/myip/issues)
 - 💡 **Feature Requests**: [GitHub Discussions](https://github.com/akhfa/myip/discussions)
-- 🔒 **Security Issues**: Please email security@example.com
+- 🔒 **Security Issues**: Please report security vulnerabilities via [GitHub Security Advisories](https://github.com/akhfa/myip/security/advisories)
 
 ## Acknowledgments
 
