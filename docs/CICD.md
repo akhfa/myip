@@ -31,36 +31,40 @@ The CI/CD pipeline consists of two main workflows:
 ### Release Workflow
 
 **Triggered on:** 
-- Pushes to `master`/`main` branches
+- Pushes to `main` branch
 - Git tags matching `v*`
 
 **Jobs:**
 
 #### 1. Test Job
 - Comprehensive testing identical to PR workflow
-- Code coverage reporting
+- Code coverage reporting with Codecov integration
 
-#### 2. Docker Job
+#### 2. Docker Standalone Job (Branch builds only)
+- **Condition**: Only runs for pushes to `main` branch (not for tags)
 - Builds and pushes Docker images to GitHub Container Registry (GHCR)
 - Multi-architecture support (amd64, arm64)
 - Automatic tagging with:
-  - `latest` (for default branch)
+  - `main` (for main branch)
   - `commit-<sha>` (for specific commits)
-  - `v<version>` (for tagged releases)
+  - `latest` (for default branch)
 
 #### 3. Release Job
-- Uses GoReleaser for automated releases
-- Creates GitHub releases with release notes
+- **Condition**: Runs for both tagged releases and main branch pushes
+- Uses GoReleaser with different modes:
+  - **Tagged releases**: Full release with publishing and announcements
+  - **Main branch**: Snapshot builds without publishing
+- Creates GitHub releases with release notes (tagged releases only)
 - Builds binaries for multiple platforms
 - Generates checksums
 - Creates package distributions (deb, rpm, apk)
-- Publishes to package managers (Homebrew, AUR, Winget)
-- Signs artifacts with Cosign
+- Publishes to package managers (Homebrew, AUR, Winget) - tagged releases only
+- Docker image building integrated via GoReleaser
 
 #### 4. Security Job
 - Runs Gosec security scanner
 - Performs Trivy vulnerability scanning
-- Uploads results to GitHub Security tab
+- Uploads SARIF results to GitHub Security tab
 
 ## GoReleaser Configuration
 
@@ -134,27 +138,34 @@ make dev
 
 #### Creating Releases
 
-##### Automatic Releases (Recommended)
-1. Merge PRs to `master`/`main` branch
-2. The release workflow automatically creates releases
-3. Docker images are built and pushed to GHCR
+##### Automatic Snapshot Builds
+1. Merge PRs to `main` branch
+2. The release workflow automatically creates snapshot builds
+3. Docker images are built and pushed to GHCR with `main` and `latest` tags
+4. No GitHub release is created (snapshot mode only)
 
-##### Manual Tagged Releases
+##### Tagged Releases (Full Release)
 1. Create and push a git tag:
    ```bash
    git tag -a v1.0.0 -m "Release v1.0.0"
    git push origin v1.0.0
    ```
-2. The release workflow will trigger and create a full release
+2. The release workflow will trigger and create a full GitHub release
+3. Publishes to package managers and creates release assets
 
 #### Release Artifacts
 
-Each release includes:
+**Tagged Releases** include:
 - **Binaries**: For Linux, macOS, and Windows (multiple architectures)
 - **Docker Images**: Multi-architecture images on GHCR
 - **Packages**: deb, rpm, and apk packages
 - **Checksums**: SHA256 checksums for all artifacts
 - **Signatures**: Cosign signatures for security verification
+- **GitHub Release**: With comprehensive release notes
+
+**Snapshot Builds** (main branch) include:
+- **Docker Images**: Multi-architecture images on GHCR (tagged as `main`, `latest`, and `commit-<sha>`)
+- **Binaries**: Built but not published (available as workflow artifacts)
 
 ## Configuration Requirements
 
