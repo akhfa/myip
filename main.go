@@ -30,7 +30,7 @@ func createServer(cfg *config.Config) *http.Server {
 }
 
 func main() {
-	// Load configuration
+
 	cfg := config.Load()
 	
 	setupRoutes()
