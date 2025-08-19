@@ -3,6 +3,14 @@ name: Pull Request
 on:
   pull_request:
     branches: [master, main]
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Dockerfile'
+      - 'Dockerfile.goreleaser'
+      - 'Makefile'
+      - '.github/workflows/**'
 
 jobs:
   test:
