@@ -1,0 +1,86 @@
+# Claude Analysis: MyIP - IP Detection Service
+
+## Repository Overview
+
+**MyIP** is a lightweight, high-performance HTTP service built in Go for detecting client IP addresses. The service provides comprehensive proxy header support and delivers detailed IP information through multiple output formats.
+
+## Architecture & Design
+
+### Project Structure
+
+The application follows Go best practices with a clean package structure:
+
+```
+myip/
+├── main.go                    # Application entry point and routing
+├── internal/                  # Private application packages
+│   ├── config/               # Configuration management
+│   │   └── config.go         # Environment variable handling
+│   ├── handlers/             # HTTP request handlers
+│   │   ├── handlers.go       # All HTTP handler implementations
+│   │   └── handlers_test.go  # Handler unit tests
+│   ├── ip/                   # IP detection and analysis logic
+│   │   ├── detector.go       # Core IP detection functions
+│   │   ├── info.go          # IP information aggregation
+│   │   └── detector_test.go  # IP detection unit tests
+│   └── models/               # Data structures and models
+│       └── models.go         # IPInfo and HealthResponse types
+└── main_test.go              # Integration tests
+```
+
+### Core Components
+
+1. **HTTP Handlers** (`internal/handlers`): The service implements specialized handlers for different use cases:
+   - `IPv4Handler`: Returns IPv4 addresses only
+   - `IPv6Handler`: Returns IPv6 addresses only (404 if unavailable)
+   - `InfoHandler`: Provides detailed IP information in plain text
+   - `JSONHandler`: Returns comprehensive JSON response
+   - `HeadersHandler`: Shows all HTTP headers for debugging
+   - `HealthHandler`: Health check endpoint
+
+2. **IP Detection Logic** (`internal/ip`): Sophisticated IP extraction with header priority:
+   - `CF-Connecting-IP` (Cloudflare - highest priority)
+   - `True-Client-IP` (Cloudflare Enterprise)
+   - `X-Real-IP` (nginx proxy/FastCGI)
+   - `X-Forwarded-For` (Standard proxy header)
+   - `X-Client-IP` (Apache mod_proxy_http)
+   - `X-Cluster-Client-IP` (Cluster environments)
+   - Less common headers: `X-Forwarded`, `Forwarded-For`, `Forwarded`
+   - Falls back to `RemoteAddr` if no headers present
+
+3. **Data Models** (`internal/models`):
+   - `IPInfo`: Comprehensive IP information structure
+   - `HealthResponse`: Health check response format
+
+4. **Configuration** (`internal/config`):
+   - Environment variable management
+   - Application configuration loading
+
+### Key Features
+
+- **Multi-Protocol Support**: Handles both IPv4 and IPv6 addresses
+- **Private IP Detection**: Identifies private IP ranges (RFC 1918, RFC 3927, RFC 5735 for IPv4; RFC 4193, RFC 4291 for IPv6)
+- **Cloudflare Detection**: Automatically identifies requests routed through Cloudflare
+- **Security-Focused**: Input validation and header sanitization
+- **Performance Optimized**: Minimal memory footprint and high throughput
+- **Container Ready**: Multi-architecture Docker support
+
+## Code Quality & Testing
+
+### Test Coverage
+The codebase demonstrates excellent testing practices:
+
+- **Unit Tests**: Comprehensive coverage for all major functions
+- **Handler Tests**: HTTP handler validation with various scenarios
+- **Edge Case Testing**: Invalid inputs, malformed addresses, error conditions
+- **Benchmark Tests**: Performance testing for critical functions
+- **Integration Tests**: End-to-end API endpoint testing
+
+### Code Structure
+- **Clean separation of concerns**: Organized into logical packages by responsibility
+- **Modular architecture**: Each package has a single, well-defined purpose
+- **Testable design**: Comprehensive unit tests for each package
+- **Well-documented functions**: Clear responsibilities and interfaces
+- **Robust error handling**: Consistent error patterns throughout
+- **Type safety**: Proper struct definitions with Go best practices
+- **Internal packages**: Uses Go's internal package pattern to prevent external imports
