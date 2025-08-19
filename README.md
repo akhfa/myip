@@ -16,7 +16,7 @@ A lightweight, fast HTTP service for detecting client IP addresses with comprehe
 - 🛡️ **Security Focused**: Identifies private IPs, proxy chains, and Cloudflare detection
 - 🚀 **High Performance**: Lightweight Go implementation with minimal dependencies
 - 📊 **Health Monitoring**: Built-in health check endpoint
-- 🐳 **Container Ready**: Multi-architecture Docker images (amd64, arm64)
+- 🐳 **Container Ready**: Optimized Docker images (amd64, arm64)
 - 🔧 **Easy Deployment**: Single binary with no external dependencies
 
 ## Quick Start
@@ -180,7 +180,7 @@ This project features a comprehensive CI/CD pipeline with two main workflows:
 ### Release Workflow
 - 🚀 **Snapshot builds** on pushes to `main` branch (Docker images only)
 - 🎯 **Tagged releases** with full publishing pipeline
-- 🐳 Multi-architecture Docker images (amd64, arm64) on GHCR
+- 🐳 Optimized Docker images (amd64, arm64) on GHCR
 - 📦 Package generation (deb, rpm, apk)
 - 🔐 Artifact signing with Cosign
 - 🛡️ Security scanning with Gosec and Trivy
@@ -188,10 +188,7 @@ This project features a comprehensive CI/CD pipeline with two main workflows:
 - 🔄 Automatic package manager publishing
 
 ### Supported Package Managers
-- 🍺 **Homebrew** (macOS/Linux)
-- 📦 **AUR** (Arch Linux)
-- 🪟 **Winget** (Windows)
-- 🐧 **APT/YUM/APK** (Linux distributions)
+- 🐧 **APT/YUM/APK** (Linux distributions - deb/rpm/apk packages)
 
 ### Container Registry
 All Docker images are published to GitHub Container Registry (GHCR):
