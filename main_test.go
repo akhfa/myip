@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 	
 	"myip/internal/config"
 	"myip/internal/handlers"
@@ -162,5 +163,75 @@ func TestConfigurationIntegration(t *testing.T) {
 	
 	if cfg.GetAddr() != ":8080" {
 		t.Errorf("Expected address :8080, got %s", cfg.GetAddr())
+	}
+}
+
+// Test the extracted setupRoutes function
+func TestSetupRoutes(t *testing.T) {
+	// Clear any existing routes
+	http.DefaultServeMux = http.NewServeMux()
+	
+	// Call setupRoutes
+	setupRoutes()
+	
+	// Test that routes are registered by making requests
+	testCases := []struct {
+		route   string
+		headers map[string]string
+		addr    string
+	}{
+		{"/", map[string]string{"CF-Connecting-IP": "203.0.113.1"}, "192.168.1.1:12345"},
+		{"/ipv6", map[string]string{"CF-Connecting-IP": "2001:db8::1"}, "[::1]:12345"}, // IPv6 needs IPv6 IP
+		{"/info", map[string]string{"CF-Connecting-IP": "203.0.113.1"}, "192.168.1.1:12345"},
+		{"/json", map[string]string{"CF-Connecting-IP": "203.0.113.1"}, "192.168.1.1:12345"},
+		{"/headers", map[string]string{"CF-Connecting-IP": "203.0.113.1"}, "192.168.1.1:12345"},
+		{"/health", map[string]string{}, "192.168.1.1:12345"}, // Health doesn't need IP headers
+	}
+	
+	for _, tc := range testCases {
+		req := httptest.NewRequest("GET", tc.route, nil)
+		for key, value := range tc.headers {
+			req.Header.Set(key, value)
+		}
+		req.RemoteAddr = tc.addr
+		
+		rr := httptest.NewRecorder()
+		http.DefaultServeMux.ServeHTTP(rr, req)
+		
+		// Should not return 404 (route not found)
+		if rr.Code == http.StatusNotFound {
+			t.Errorf("Route %s not registered - got 404", tc.route)
+		}
+	}
+}
+
+// Test the extracted createServer function
+func TestCreateServer(t *testing.T) {
+	cfg := &config.Config{Port: "3000"}
+	
+	server := createServer(cfg)
+	
+	if server.Addr != ":3000" {
+		t.Errorf("Expected server address :3000, got %s", server.Addr)
+	}
+	
+	if server.ReadTimeout != 15*time.Second {
+		t.Errorf("Expected ReadTimeout 15s, got %v", server.ReadTimeout)
+	}
+	
+	if server.WriteTimeout != 15*time.Second {
+		t.Errorf("Expected WriteTimeout 15s, got %v", server.WriteTimeout)
+	}
+	
+	if server.IdleTimeout != 60*time.Second {
+		t.Errorf("Expected IdleTimeout 60s, got %v", server.IdleTimeout)
+	}
+	
+	if server.ReadHeaderTimeout != 5*time.Second {
+		t.Errorf("Expected ReadHeaderTimeout 5s, got %v", server.ReadHeaderTimeout)
+	}
+	
+	if server.Handler != nil {
+		t.Errorf("Expected Handler to be nil (use default ServeMux), got %v", server.Handler)
 	}
 }
