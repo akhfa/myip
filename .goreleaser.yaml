@@ -51,6 +51,7 @@ signs:
       - "${signature}"
       - "${artifact}"
     artifacts: checksum
+    signature: "${artifact}.sig"
 
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
