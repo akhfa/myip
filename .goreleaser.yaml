@@ -40,6 +40,18 @@ archives:
 checksum:
   name_template: 'checksums.txt'
 
+signs:
+  - cmd: cosign
+    args:
+      - sign-blob
+      - --yes
+      - --key
+      - env://COSIGN_PRIVATE_KEY
+      - --output-signature
+      - "${signature}"
+      - "${artifact}"
+    artifacts: checksum
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
@@ -115,6 +127,17 @@ docker_manifests:
     image_templates:
       - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/{{ .ProjectName }}:latest-amd64"
       - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/{{ .ProjectName }}:latest-arm64"
+
+docker_signs:
+  - cmd: cosign
+    args:
+      - sign
+      - --yes
+      - --key
+      - env://COSIGN_PRIVATE_KEY
+      - "${artifact}"
+    artifacts: manifests
+    output: true
 
 release:
   github:

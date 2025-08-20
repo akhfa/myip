@@ -198,6 +198,40 @@ All Docker images are published to GitHub Container Registry (GHCR):
 
 For detailed CI/CD documentation, see [docs/CICD.md](docs/CICD.md).
 
+## Security & Verification
+
+### Verifying Signatures
+
+All Docker images and release artifacts are signed with Cosign for security verification.
+
+#### Verify Docker Images
+```bash
+# Download public key
+curl -O https://raw.githubusercontent.com/akhfa/myip/main/.cosign/cosign.pub
+
+# Verify latest image
+cosign verify --key cosign.pub ghcr.io/akhfa/myip:latest
+
+# Verify specific version
+cosign verify --key cosign.pub ghcr.io/akhfa/myip:v1.0.0
+```
+
+#### Verify Release Binaries
+```bash
+# Download release assets (example for v1.0.0)
+wget https://github.com/akhfa/myip/releases/download/v1.0.0/checksums.txt
+wget https://github.com/akhfa/myip/releases/download/v1.0.0/checksums.txt.sig
+
+# Verify checksum signature
+cosign verify-blob --key cosign.pub --signature checksums.txt.sig checksums.txt
+
+# Verify your downloaded binary matches the signed checksum
+sha256sum myip_Linux_x86_64.tar.gz
+grep myip_Linux_x86_64.tar.gz checksums.txt
+```
+
+For complete setup and verification instructions, see [docs/COSIGN_SETUP.md](docs/COSIGN_SETUP.md).
+
 ## Docker
 
 ### Multi-Architecture Support
@@ -298,8 +332,9 @@ The service works seamlessly behind Cloudflare with proper `CF-Connecting-IP` he
 - 🚫 **Zero Dependencies**: No external dependencies, minimal attack surface
 - � **Private IP Detection**: Identifies private IP ranges (RFC 1918, 3927, 5735, 4193, 4291)
 - �📋 **Security Scanning**: Automated vulnerability scanning with Gosec and Trivy in CI/CD
-- ✍️ **Signed Releases**: All releases and Docker images are signed with Cosign
+- ✍️ **Signed Releases**: All releases and Docker images are signed with Cosign for integrity verification
 - 🛡️ **SARIF Integration**: Security findings integrated with GitHub Security tab
+- 🔐 **Signature Verification**: Verify Docker images and binaries with included public key
 
 ## Performance
 
