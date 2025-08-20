@@ -101,10 +101,11 @@ The `.goreleaser.yaml` file defines:
 - SARIF report generation for GitHub Security tab
 
 ### Artifact Security
-- Artifact signing with Cosign
-- Docker image signing
-- Checksum generation for all releases
-- SBOM (Software Bill of Materials) generation
+- **Artifact signing with Cosign**: All Docker images and release checksums are signed
+- **Docker image signing**: Both branch builds and releases are signed with Cosign
+- **Release binary signing**: Checksum files are signed for integrity verification
+- **Checksum generation**: SHA256 checksums for all releases
+- **SBOM generation**: Software Bill of Materials for transparency (planned)
 
 ## Usage Instructions
 
@@ -157,10 +158,10 @@ make dev
 
 **Tagged Releases** include:
 - **Binaries**: For Linux, macOS, and Windows (multiple architectures)
-- **Docker Images**: Multi-architecture images on GHCR
+- **Docker Images**: Multi-architecture images on GHCR with Cosign signatures
 - **Packages**: deb, rpm, and apk packages
-- **Checksums**: SHA256 checksums for all artifacts
-- **Signatures**: Cosign signatures for security verification
+- **Checksums**: SHA256 checksums for all artifacts with Cosign signatures
+- **Security Verification**: Cosign signatures for Docker images and checksums
 - **GitHub Release**: With comprehensive release notes
 
 **Snapshot Builds** (main branch) include:
@@ -187,6 +188,26 @@ Recommended branch protection rules for `master`/`main`:
 - Require status checks to pass
 - Require branches to be up to date
 - Restrict force pushes
+
+### Cosign Signing Setup (Required for Maintainers)
+
+#### Initial Setup
+1. Generate Cosign key pair using the instructions in [COSIGN_SETUP.md](COSIGN_SETUP.md)
+2. Add the following GitHub repository secrets:
+   - `COSIGN_PRIVATE_KEY`: The entire private key content
+   - `COSIGN_PASSWORD`: The password for the private key
+3. Commit the public key to `.cosign/cosign.pub` in the repository
+
+#### Signature Verification
+```bash
+# Verify Docker images
+cosign verify --key .cosign/cosign.pub ghcr.io/akhfa/myip:latest
+
+# Verify release checksums
+cosign verify-blob --key .cosign/cosign.pub --signature checksums.txt.sig checksums.txt
+```
+
+For complete setup instructions, see [COSIGN_SETUP.md](COSIGN_SETUP.md).
 
 ### Package Manager Setup (Optional)
 
