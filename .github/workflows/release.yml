@@ -242,7 +242,7 @@ jobs:
         go-version: '1.24.x'
 
     - name: Setup security tools
-      run: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+      run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
     - name: Run security scan with SARIF output
       run: make security-sarif

@@ -255,6 +255,7 @@ ci-setup:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 	go install golang.org/x/lint/golint@latest
 	go install github.com/swaggo/swag/cmd/swag@latest
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
 
 ## ci-test: Run CI tests
 .PHONY: ci-test
@@ -267,7 +268,7 @@ security:
 	@if command -v gosec > /dev/null; then \
 		gosec ./...; \
 	else \
-		echo "gosec not found. Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
+		echo "gosec not found. Install with: go install github.com/securego/gosec/v2/cmd/gosec@latest"; \
 	fi
 
 ## security-sarif: Run security checks with SARIF output
@@ -277,7 +278,7 @@ security-sarif:
 	@if command -v gosec > /dev/null; then \
 		gosec -no-fail -fmt sarif -out results.sarif ./...; \
 	else \
-		echo "gosec not found. Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
+		echo "gosec not found. Install with: go install github.com/securego/gosec/v2/cmd/gosec@latest"; \
 	fi
 
 ## all: Run all checks and build
