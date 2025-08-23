@@ -130,6 +130,7 @@ My IP analyzes the following headers in order of priority:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `8080` | HTTP server port |
+| `HOST` | `localhost:8080` | Host configuration (used internally for server setup) |
 
 ## Development
 
