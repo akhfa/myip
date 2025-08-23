@@ -16,17 +16,18 @@ The CI/CD pipeline consists of two main workflows:
 **Triggered on:** Pull requests to `master` or `main` branches
 
 **Jobs:**
-- **Test Job**: Runs comprehensive testing including unit tests, linting, and code quality checks
-- **Build Job**: Cross-compiles binaries for multiple platforms
-- **Docker Build Job**: Builds Docker image (without pushing)
+- **Test Job**: Runs comprehensive testing using Makefile commands for consistency
+- **Docker Build Job**: Builds Docker image using Makefile (without pushing)
 
 **Features:**
+- **Makefile Integration**: All build and test steps use standardized Makefile commands
+- **Swagger Documentation**: Automatically generates API documentation before builds
 - Go module caching for faster builds
-- Static code analysis with `staticcheck` and `golint`
-- Race condition detection
+- Static code analysis with `make staticcheck` and `make lint`
+- Race condition detection with `make test-coverage-ci`
 - Code coverage reporting to Codecov
-- Multi-platform binary compilation
-- Docker image build validation
+- Docker image build validation with `make docker-test-build`
+- Consistent CI environment setup with `make ci-setup`
 
 ### Release Workflow
 
@@ -37,8 +38,12 @@ The CI/CD pipeline consists of two main workflows:
 **Jobs:**
 
 #### 1. Test Job
-- Comprehensive testing identical to PR workflow
+- **Makefile Integration**: Uses standardized Makefile commands for all testing
+- **Swagger Generation**: Automatically generates API docs via `make build` 
+- Comprehensive testing with `make test-coverage-ci` (includes race detection)
+- Code quality checks with `make vet`, `make staticcheck`
 - Code coverage reporting with Codecov integration
+- Consistent CI environment setup with `make ci-setup`
 
 #### 2. Docker Standalone Job (Branch builds only)
 - **Condition**: Only runs for pushes to `main` branch (not for tags)
@@ -62,7 +67,8 @@ The CI/CD pipeline consists of two main workflows:
 - Docker image building integrated via GoReleaser
 
 #### 4. Security Job
-- Runs Gosec security scanner
+- **Makefile Integration**: Uses `make security-sarif` for consistent security scanning
+- Runs Gosec security scanner with SARIF output format
 - Performs Trivy vulnerability scanning
 - Uploads SARIF results to GitHub Security tab
 
@@ -122,17 +128,29 @@ The `.goreleaser.yaml` file defines:
 Use the provided Makefile for local development:
 
 ```bash
+# Setup CI environment (install all tools)
+make ci-setup
+
 # Run all checks locally
 make check
 
-# Run tests with coverage
-make test-cover
+# Run tests with coverage (CI version with race detector)
+make test-coverage-ci
 
-# Build the application
+# Build the application (includes swagger generation)
 make build
+
+# Generate swagger documentation only
+make swagger
 
 # Run in development mode
 make dev
+
+# Test Docker build
+make docker-test-build
+
+# Run security checks
+make security
 ```
 
 ### For Maintainers

@@ -161,27 +161,33 @@ make run
 ### Available Make Commands
 
 ```bash
-make help          # Show all available commands
-make build         # Build the application
-make run           # Run the application
-make dev           # Run with hot reload (requires air)
-make test          # Run tests
-make test-race     # Run tests with race detector
-make test-cover    # Run tests with coverage
-make bench         # Run benchmarks
-make fmt           # Format code
-make vet           # Run go vet
-make lint          # Run golint
-make staticcheck   # Run staticcheck
-make check         # Run all code quality checks
-make build-all     # Build for all platforms
-make docker-build  # Build Docker image
-make docker-run    # Run Docker container
-make clean         # Clean build artifacts
-make deps          # Download and verify dependencies
-make tidy          # Tidy dependencies
-make install       # Install the application
-make security      # Run security checks
+make help               # Show all available commands
+make swagger            # Generate Swagger documentation
+make build              # Build the application (includes swagger)
+make run                # Run the application
+make dev                # Run with hot reload (requires air)
+make test               # Run tests
+make test-race          # Run tests with race detector
+make test-cover         # Run tests with coverage
+make test-coverage-ci   # Run tests with coverage for CI (with race detector)
+make bench              # Run benchmarks
+make fmt                # Format code
+make vet                # Run go vet
+make lint               # Run golint
+make staticcheck        # Run staticcheck
+make check              # Run all code quality checks
+make build-all          # Build for all platforms
+make docker-build       # Build Docker image
+make docker-test-build  # Build Docker image for testing (no push)
+make docker-run         # Run Docker container
+make clean              # Clean build artifacts
+make deps               # Download and verify dependencies
+make tidy               # Tidy dependencies
+make install            # Install the application
+make security           # Run security checks
+make security-sarif     # Run security checks with SARIF output
+make ci-setup           # Setup CI environment (install tools)
+make ci-test            # Run CI tests (deps, swagger, vet, staticcheck, test-race)
 ```
 
 ## CI/CD Pipeline
@@ -189,20 +195,24 @@ make security      # Run security checks
 This project features a comprehensive CI/CD pipeline with two main workflows:
 
 ### Pull Request Workflow
-- ✅ Comprehensive testing (unit tests, race detection, benchmarks)
-- 🔍 Static analysis with `staticcheck` and `golint`
-- 🏗️ Multi-platform build verification (Linux, macOS, Windows)
-- 🐳 Docker image build validation
+- 🔧 **Makefile Integration**: All steps use standardized `make` commands for consistency
+- 📚 **Swagger Generation**: Automatically generates API documentation via `make build`
+- ✅ Comprehensive testing with `make test-coverage-ci` (race detection included)
+- 🔍 Static analysis with `make staticcheck` and `make lint`
+- 🏗️ Application build with `make build` (includes swagger docs)
+- 🐳 Docker image build validation with `make docker-test-build`
 - 📊 Code coverage reporting with Codecov integration
-- 🛡️ Security scanning with Gosec
+- ⚙️ Consistent CI setup with `make ci-setup`
 
 ### Release Workflow
+- 🔧 **Makefile Integration**: Uses `make` commands for consistent testing and security
 - 🚀 **Snapshot builds** on pushes to `main` branch (Docker images only)
 - 🎯 **Tagged releases** with full publishing pipeline
+- 📚 **Swagger Documentation**: Generated automatically via `make build`
 - 🐳 Optimized Docker images (amd64, arm64) on GHCR
 - 📦 Package generation (deb, rpm, apk)
 - 🔐 Artifact signing with Cosign
-- 🛡️ Security scanning with Gosec and Trivy
+- 🛡️ Security scanning with `make security-sarif` and Trivy
 - 📋 SBOM (Software Bill of Materials) generation
 - 🔄 Automatic package manager publishing
 

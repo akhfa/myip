@@ -86,3 +86,26 @@ The codebase demonstrates excellent testing practices:
 - **Robust error handling**: Consistent error patterns throughout
 - **Type safety**: Proper struct definitions with Go best practices
 - **Internal packages**: Uses Go's internal package pattern to prevent external imports
+
+## CI/CD Integration
+
+The project features a comprehensive CI/CD pipeline that leverages the Makefile for consistency:
+
+### Workflow Architecture
+- **Pull Request Workflow**: Uses `make` commands for all testing and quality checks
+- **Release Workflow**: Employs Makefile targets for consistent builds and security scanning
+- **Makefile Integration**: Ensures consistency between local development and CI environments
+
+### Key Makefile Targets for CI/CD
+- `make ci-setup`: Installs all required CI tools (swag, staticcheck, golint, gosec)
+- `make deps`: Downloads and verifies Go module dependencies
+- `make build`: Builds application with automatic Swagger documentation generation
+- `make test-coverage-ci`: Runs tests with race detector and coverage for CI
+- `make security-sarif`: Runs security scanning with SARIF output for GitHub Security tab
+- `make docker-test-build`: Validates Docker builds without pushing
+
+### Swagger Documentation
+The application automatically generates comprehensive API documentation:
+- Interactive Swagger UI available at `/swagger/` endpoint
+- OpenAPI specification generated during build process via `make swagger`
+- Documentation included in all CI/CD builds for consistency

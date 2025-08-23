@@ -76,6 +76,12 @@ test-cover:
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
+## test-coverage-ci: Run tests with coverage for CI (with race detector)
+.PHONY: test-coverage-ci
+test-coverage-ci:
+	@echo "Running tests with coverage for CI..."
+	go test -race -coverprofile=coverage.out -covermode=atomic ./...
+
 ## bench: Run benchmarks
 .PHONY: bench
 bench:
@@ -173,6 +179,12 @@ docker-build-goreleaser: build
 	@echo "Building Docker image with GoReleaser Dockerfile..."
 	docker build -f Dockerfile.goreleaser -t $(BINARY_NAME):goreleaser .
 
+## docker-test-build: Build Docker image for testing (no push)
+.PHONY: docker-test-build
+docker-test-build:
+	@echo "Building Docker image for testing..."
+	docker build -t $(BINARY_NAME):test .
+
 ##@ Maintenance
 
 ## clean: Clean build artifacts
@@ -241,6 +253,16 @@ security:
 	@echo "Running security checks..."
 	@if command -v gosec > /dev/null; then \
 		gosec ./...; \
+	else \
+		echo "gosec not found. Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
+	fi
+
+## security-sarif: Run security checks with SARIF output
+.PHONY: security-sarif
+security-sarif:
+	@echo "Running security checks with SARIF output..."
+	@if command -v gosec > /dev/null; then \
+		gosec -no-fail -fmt sarif -out results.sarif ./...; \
 	else \
 		echo "gosec not found. Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
 	fi
