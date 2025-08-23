@@ -3,7 +3,7 @@ package ip
 import (
 	"net/http"
 	"time"
-	
+
 	"myip/internal/models"
 )
 
@@ -12,7 +12,7 @@ func GetInfo(r *http.Request) *models.IPInfo {
 	clientIP, detectedVia := ExtractClientIP(r)
 	ipv4 := FindIPv4(r)
 	ipv6 := FindIPv6(r)
-	
+
 	return &models.IPInfo{
 		ClientIP:     clientIP,
 		DetectedVia:  detectedVia,

@@ -52,8 +52,8 @@ func TestIsPrivate(t *testing.T) {
 
 func TestExtractClientIP(t *testing.T) {
 	tests := []struct {
-		name     string
-		headers  map[string]string
+		name       string
+		headers    map[string]string
 		remoteAddr string
 		expectedIP string
 	}{
@@ -93,7 +93,7 @@ func TestExtractClientIP(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			req.RemoteAddr = test.remoteAddr
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -141,7 +141,7 @@ func TestFindIPv4(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			req.RemoteAddr = test.remoteAddr
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -189,7 +189,7 @@ func TestFindIPv6(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			req.RemoteAddr = test.remoteAddr
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -239,7 +239,7 @@ func TestIsCloudflareRequest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -281,7 +281,7 @@ func TestRemoveDuplicates(t *testing.T) {
 			if len(result) != len(test.expected) {
 				t.Errorf("RemoveDuplicates() length = %v; want %v", len(result), len(test.expected))
 			}
-			
+
 			for i, v := range result {
 				if v != test.expected[i] {
 					t.Errorf("RemoveDuplicates()[%d] = %v; want %v", i, v, test.expected[i])
@@ -369,7 +369,7 @@ func TestIsPrivateComprehensive(t *testing.T) {
 		{"127.255.255.255", true, "loopback range end"},
 		{"169.254.0.1", true, "link-local"},
 		{"169.254.255.254", true, "link-local end"},
-		
+
 		// IPv4 public ranges
 		{"8.8.8.8", false, "Google DNS"},
 		{"1.1.1.1", false, "Cloudflare DNS"},
@@ -379,20 +379,20 @@ func TestIsPrivateComprehensive(t *testing.T) {
 		{"172.32.0.0", false, "just after 172.31"},
 		{"192.167.255.255", false, "just before 192.168"},
 		{"192.169.0.0", false, "just after 192.168"},
-		
+
 		// IPv6 private ranges
 		{"::1", true, "IPv6 loopback"},
 		{"fc00::", true, "unique local start"},
 		{"fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", true, "unique local end"},
 		{"fe80::", true, "link-local start"},
 		{"febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff", true, "link-local end"},
-		
+
 		// IPv6 public ranges
 		{"2001:db8::", false, "documentation range"},
 		{"2001:4860:4860::8888", false, "Google IPv6 DNS"},
 		{"2606:4700:4700::1111", false, "Cloudflare IPv6 DNS"},
 		{"ff00::", false, "multicast"},
-		
+
 		// Edge cases
 		{"", false, "empty string"},
 		{"invalid", false, "invalid IP"},
@@ -441,19 +441,19 @@ func TestRemoveDuplicatesEdgeCases(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := RemoveDuplicates(test.input)
-			
+
 			if test.expected == nil {
 				if result != nil {
 					t.Errorf("RemoveDuplicates() = %v; want nil", result)
 				}
 				return
 			}
-			
+
 			if len(result) != len(test.expected) {
 				t.Errorf("RemoveDuplicates() length = %v; want %v", len(result), len(test.expected))
 				return
 			}
-			
+
 			for i, v := range result {
 				if v != test.expected[i] {
 					t.Errorf("RemoveDuplicates()[%d] = %v; want %v", i, v, test.expected[i])
@@ -474,7 +474,7 @@ func TestExtractClientIPEdgeCases(t *testing.T) {
 		{
 			name: "True-Client-IP priority",
 			headers: map[string]string{
-				"True-Client-IP": "203.0.113.1",
+				"True-Client-IP":  "203.0.113.1",
 				"X-Forwarded-For": "203.0.113.2",
 			},
 			remoteAddr:  "192.168.1.1:12345",
@@ -557,7 +557,7 @@ func TestExtractClientIPEdgeCases(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			req.RemoteAddr = test.remoteAddr
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -581,22 +581,22 @@ func TestFindIPv4EdgeCases(t *testing.T) {
 		expected   string
 	}{
 		{
-			name:         "No IPv4 found - only IPv6",
-			headers:      map[string]string{"X-Forwarded-For": "2001:db8::1"},
-			remoteAddr:   "[2001:db8::1]:12345",
-			expected:     "",
+			name:       "No IPv4 found - only IPv6",
+			headers:    map[string]string{"X-Forwarded-For": "2001:db8::1"},
+			remoteAddr: "[2001:db8::1]:12345",
+			expected:   "",
 		},
 		{
-			name:         "No valid IP found",
-			headers:      map[string]string{"X-Forwarded-For": "invalid"},
-			remoteAddr:   "invalid:12345",
-			expected:     "",
+			name:       "No valid IP found",
+			headers:    map[string]string{"X-Forwarded-For": "invalid"},
+			remoteAddr: "invalid:12345",
+			expected:   "",
 		},
 		{
-			name:         "Malformed RemoteAddr without port",
-			headers:      map[string]string{},
-			remoteAddr:   "192.168.1.1",
-			expected:     "192.168.1.1",
+			name:       "Malformed RemoteAddr without port",
+			headers:    map[string]string{},
+			remoteAddr: "192.168.1.1",
+			expected:   "192.168.1.1",
 		},
 	}
 
@@ -604,7 +604,7 @@ func TestFindIPv4EdgeCases(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			req.RemoteAddr = test.remoteAddr
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -625,22 +625,22 @@ func TestFindIPv6EdgeCases(t *testing.T) {
 		expected   string
 	}{
 		{
-			name:         "No IPv6 found - only IPv4",
-			headers:      map[string]string{"X-Forwarded-For": "192.168.1.1"},
-			remoteAddr:   "192.168.1.1:12345",
-			expected:     "",
+			name:       "No IPv6 found - only IPv4",
+			headers:    map[string]string{"X-Forwarded-For": "192.168.1.1"},
+			remoteAddr: "192.168.1.1:12345",
+			expected:   "",
 		},
 		{
-			name:         "No valid IP found",
-			headers:      map[string]string{"X-Forwarded-For": "invalid"},
-			remoteAddr:   "invalid:12345",
-			expected:     "",
+			name:       "No valid IP found",
+			headers:    map[string]string{"X-Forwarded-For": "invalid"},
+			remoteAddr: "invalid:12345",
+			expected:   "",
 		},
 		{
-			name:         "Malformed RemoteAddr without port",
-			headers:      map[string]string{},
-			remoteAddr:   "2001:db8::1",
-			expected:     "2001:db8::1",
+			name:       "Malformed RemoteAddr without port",
+			headers:    map[string]string{},
+			remoteAddr: "2001:db8::1",
+			expected:   "2001:db8::1",
 		},
 	}
 
@@ -648,7 +648,7 @@ func TestFindIPv6EdgeCases(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			req.RemoteAddr = test.remoteAddr
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -664,7 +664,7 @@ func TestFindIPv6EdgeCases(t *testing.T) {
 func TestIsCloudflareRequestTrueClientIP(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Set("True-Client-IP", "203.0.113.1")
-	
+
 	if !IsCloudflareRequest(req) {
 		t.Error("Expected IsCloudflareRequest to return true for True-Client-IP header")
 	}

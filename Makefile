@@ -18,9 +18,21 @@ help:
 
 ##@ Development
 
+## swagger: Generate Swagger documentation
+.PHONY: swagger
+swagger:
+	@echo "Generating Swagger documentation..."
+	@if command -v swag > /dev/null; then \
+		swag init -g main.go -o docs/; \
+	else \
+		echo "swag not found. Installing..."; \
+		go install github.com/swaggo/swag/cmd/swag@latest; \
+		swag init -g main.go -o docs/; \
+	fi
+
 ## build: Build the application
 .PHONY: build
-build:
+build: swagger
 	@echo "Building $(BINARY_NAME)..."
 	go build $(LDFLAGS) -o $(BINARY_NAME) .
 
@@ -64,6 +76,12 @@ test-cover:
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
+## test-coverage-ci: Run tests with coverage for CI (with race detector)
+.PHONY: test-coverage-ci
+test-coverage-ci:
+	@echo "Running tests with coverage for CI..."
+	go test -race -coverprofile=coverage.out -covermode=atomic ./...
+
 ## bench: Run benchmarks
 .PHONY: bench
 bench:
@@ -77,6 +95,19 @@ bench:
 fmt:
 	@echo "Formatting code..."
 	go fmt ./...
+
+## fmt-check: Check if code is formatted (fails if not)
+.PHONY: fmt-check
+fmt-check:
+	@echo "Checking code formatting..."
+	@if [ -n "$$(gofmt -l -s .)" ]; then \
+		echo "The following files are not formatted:"; \
+		gofmt -l -s .; \
+		echo "Please run 'make fmt' to fix formatting issues."; \
+		exit 1; \
+	else \
+		echo "All files are properly formatted."; \
+	fi
 
 ## vet: Run go vet
 .PHONY: vet
@@ -106,7 +137,7 @@ staticcheck:
 
 ## check: Run all code quality checks
 .PHONY: check
-check: fmt vet lint staticcheck test
+check: fmt-check vet lint staticcheck test
 
 ##@ Build & Release
 
@@ -161,6 +192,12 @@ docker-build-goreleaser: build
 	@echo "Building Docker image with GoReleaser Dockerfile..."
 	docker build -f Dockerfile.goreleaser -t $(BINARY_NAME):goreleaser .
 
+## docker-test-build: Build Docker image for testing (no push)
+.PHONY: docker-test-build
+docker-test-build:
+	@echo "Building Docker image for testing..."
+	docker build -t $(BINARY_NAME):test .
+
 ##@ Maintenance
 
 ## clean: Clean build artifacts
@@ -173,6 +210,7 @@ clean:
 	@rm -f coverage.out coverage.html
 	@rm -f *.test
 	@rm -f *.log
+	@rm -f docs/docs.go docs/swagger.json docs/swagger.yaml
 
 ## deps: Download and verify dependencies
 .PHONY: deps
@@ -216,10 +254,11 @@ ci-setup:
 	@echo "Setting up CI environment..."
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 	go install golang.org/x/lint/golint@latest
+	go install github.com/swaggo/swag/cmd/swag@latest
 
 ## ci-test: Run CI tests
 .PHONY: ci-test
-ci-test: deps vet staticcheck test-race
+ci-test: deps swagger fmt-check vet staticcheck test-race
 
 ## security: Run security checks
 .PHONY: security
@@ -231,9 +270,19 @@ security:
 		echo "gosec not found. Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
 	fi
 
+## security-sarif: Run security checks with SARIF output
+.PHONY: security-sarif
+security-sarif:
+	@echo "Running security checks with SARIF output..."
+	@if command -v gosec > /dev/null; then \
+		gosec -no-fail -fmt sarif -out results.sarif ./...; \
+	else \
+		echo "gosec not found. Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
+	fi
+
 ## all: Run all checks and build
 .PHONY: all
-all: clean deps check build test-cover
+all: clean deps swagger check build test-cover
 
 .PHONY: version
 version:

@@ -37,6 +37,7 @@ myip/
    - `JSONHandler`: Returns comprehensive JSON response
    - `HeadersHandler`: Shows all HTTP headers for debugging
    - `HealthHandler`: Health check endpoint
+   - **Swagger Documentation**: Interactive API documentation endpoint at `/swagger/`
 
 2. **IP Detection Logic** (`internal/ip`): Sophisticated IP extraction with header priority:
    - `CF-Connecting-IP` (Cloudflare - highest priority)
@@ -61,6 +62,7 @@ myip/
 - **Multi-Protocol Support**: Handles both IPv4 and IPv6 addresses
 - **Private IP Detection**: Identifies private IP ranges (RFC 1918, RFC 3927, RFC 5735 for IPv4; RFC 4193, RFC 4291 for IPv6)
 - **Cloudflare Detection**: Automatically identifies requests routed through Cloudflare
+- **Interactive API Documentation**: Built-in Swagger UI with comprehensive OpenAPI specification
 - **Security-Focused**: Input validation and header sanitization
 - **Performance Optimized**: Minimal memory footprint and high throughput
 - **Container Ready**: Multi-architecture Docker support
@@ -84,3 +86,26 @@ The codebase demonstrates excellent testing practices:
 - **Robust error handling**: Consistent error patterns throughout
 - **Type safety**: Proper struct definitions with Go best practices
 - **Internal packages**: Uses Go's internal package pattern to prevent external imports
+
+## CI/CD Integration
+
+The project features a comprehensive CI/CD pipeline that leverages the Makefile for consistency:
+
+### Workflow Architecture
+- **Pull Request Workflow**: Uses `make` commands for all testing and quality checks
+- **Release Workflow**: Employs Makefile targets for consistent builds and security scanning
+- **Makefile Integration**: Ensures consistency between local development and CI environments
+
+### Key Makefile Targets for CI/CD
+- `make ci-setup`: Installs all required CI tools (swag, staticcheck, golint, gosec)
+- `make deps`: Downloads and verifies Go module dependencies
+- `make build`: Builds application with automatic Swagger documentation generation
+- `make test-coverage-ci`: Runs tests with race detector and coverage for CI
+- `make security-sarif`: Runs security scanning with SARIF output for GitHub Security tab
+- `make docker-test-build`: Validates Docker builds without pushing
+
+### Swagger Documentation
+The application automatically generates comprehensive API documentation:
+- Interactive Swagger UI available at `/swagger/` endpoint
+- OpenAPI specification generated during build process via `make swagger`
+- Documentation included in all CI/CD builds for consistency

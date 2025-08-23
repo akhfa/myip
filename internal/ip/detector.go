@@ -9,8 +9,8 @@ import (
 
 // Header priority order for IP detection
 var headerPriority = []string{
-	"CF-Connecting-IP",     // Cloudflare
-	"True-Client-IP",       // Cloudflare Enterprise
+	"CF-Connecting-IP",    // Cloudflare
+	"True-Client-IP",      // Cloudflare Enterprise
 	"X-Real-IP",           // nginx proxy/FastCGI
 	"X-Forwarded-For",     // Standard proxy header
 	"X-Client-IP",         // Apache mod_proxy_http
@@ -60,7 +60,7 @@ func IsPrivate(ip string) bool {
 	if ip == "" {
 		return false
 	}
-	
+
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
 		return false
@@ -88,9 +88,9 @@ func IsPrivate(ip string) bool {
 
 // IsCloudflareRequest checks if the request comes through Cloudflare
 func IsCloudflareRequest(r *http.Request) bool {
-	return r.Header.Get("CF-Connecting-IP") != "" || 
-		   r.Header.Get("CF-Ray") != "" ||
-		   r.Header.Get("True-Client-IP") != ""
+	return r.Header.Get("CF-Connecting-IP") != "" ||
+		r.Header.Get("CF-Ray") != "" ||
+		r.Header.Get("True-Client-IP") != ""
 }
 
 // ExtractClientIP extracts the client IP from request headers with detection method
@@ -142,7 +142,7 @@ func FindIPv4(r *http.Request) string {
 	if err != nil {
 		host = r.RemoteAddr
 	}
-	
+
 	if IsValid(host) {
 		parsedIP := net.ParseIP(host)
 		if parsedIP != nil && parsedIP.To4() != nil {
@@ -177,7 +177,7 @@ func FindIPv6(r *http.Request) string {
 	if err != nil {
 		host = r.RemoteAddr
 	}
-	
+
 	if IsValid(host) {
 		parsedIP := net.ParseIP(host)
 		if parsedIP != nil && parsedIP.To4() == nil {
@@ -193,16 +193,16 @@ func RemoveDuplicates(slice []string) []string {
 	if len(slice) == 0 {
 		return slice
 	}
-	
+
 	seen := make(map[string]bool)
 	result := make([]string, 0, len(slice))
-	
+
 	for _, item := range slice {
 		if !seen[item] {
 			seen[item] = true
 			result = append(result, item)
 		}
 	}
-	
+
 	return result
 }
