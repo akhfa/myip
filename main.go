@@ -7,7 +7,7 @@ import (
 	
 	"myip/internal/config"
 	"myip/internal/handlers"
-	_ "myip/docs"
+	"myip/docs"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
@@ -50,6 +50,9 @@ func createServer(cfg *config.Config) *http.Server {
 func main() {
 
 	cfg := config.Load()
+	
+	// Update Swagger host dynamically
+	docs.SwaggerInfo.Host = cfg.Host
 	
 	setupRoutes()
 	

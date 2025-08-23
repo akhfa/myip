@@ -16,13 +16,13 @@ import (
 // @Accept json
 // @Produce plain
 // @Success 200 {string} string "IPv4 address"
-// @Failure 400 {string} string "No IPv4 address found"
+// @Failure 404 {string} string "No IPv4 address found"
 // @Router / [get]
 func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 	ipv4 := ip.FindIPv4(r)
 	
 	if ipv4 == "" {
-		http.Error(w, "No IPv4 address found", http.StatusBadRequest)
+		http.Error(w, "No IPv4 address found", http.StatusNotFound)
 		return
 	}
 	

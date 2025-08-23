@@ -295,13 +295,13 @@ func TestIPv4HandlerErrorCases(t *testing.T) {
 			name:         "No IPv4 found - only IPv6",
 			headers:      map[string]string{"X-Forwarded-For": "2001:db8::1"},
 			remoteAddr:   "[2001:db8::1]:12345",
-			expectedCode: http.StatusBadRequest,
+			expectedCode: http.StatusNotFound,
 		},
 		{
 			name:         "No valid IP found",
 			headers:      map[string]string{"X-Forwarded-For": "invalid"},
 			remoteAddr:   "invalid:12345",
-			expectedCode: http.StatusBadRequest,
+			expectedCode: http.StatusNotFound,
 		},
 	}
 

@@ -8,11 +8,16 @@ import (
 func TestLoadDefaultPort(t *testing.T) {
 	// Ensure no PORT environment variable is set
 	os.Unsetenv("PORT")
+	os.Unsetenv("HOST")
 	
 	cfg := Load()
 	
 	if cfg.Port != "8080" {
 		t.Errorf("Expected default port 8080, got %s", cfg.Port)
+	}
+	
+	if cfg.Host != "localhost:8080" {
+		t.Errorf("Expected default host localhost:8080, got %s", cfg.Host)
 	}
 	
 	expectedAddr := ":8080"
@@ -73,5 +78,41 @@ func TestGetAddrFormat(t *testing.T) {
 		if result != test.expectedAddr {
 			t.Errorf("For port %s, expected %s, got %s", test.port, test.expectedAddr, result)
 		}
+	}
+}
+
+func TestLoadDefaultHost(t *testing.T) {
+	// Ensure no HOST environment variable is set
+	os.Unsetenv("HOST")
+	os.Unsetenv("PORT")
+	
+	cfg := Load()
+	
+	if cfg.Host != "localhost:8080" {
+		t.Errorf("Expected default host localhost:8080, got %s", cfg.Host)
+	}
+}
+
+func TestLoadCustomHost(t *testing.T) {
+	// Set custom HOST environment variable
+	os.Setenv("HOST", "example.com")
+	defer os.Unsetenv("HOST")
+	
+	cfg := Load()
+	
+	if cfg.Host != "example.com" {
+		t.Errorf("Expected custom host example.com, got %s", cfg.Host)
+	}
+}
+
+func TestLoadEmptyHostFallback(t *testing.T) {
+	// Set empty HOST environment variable
+	os.Setenv("HOST", "")
+	defer os.Unsetenv("HOST")
+	
+	cfg := Load()
+	
+	if cfg.Host != "localhost:8080" {
+		t.Errorf("Expected default host localhost:8080 when HOST is empty, got %s", cfg.Host)
 	}
 }
