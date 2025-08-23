@@ -37,6 +37,7 @@ myip/
    - `JSONHandler`: Returns comprehensive JSON response
    - `HeadersHandler`: Shows all HTTP headers for debugging
    - `HealthHandler`: Health check endpoint
+   - **Swagger Documentation**: Interactive API documentation endpoint at `/swagger/`
 
 2. **IP Detection Logic** (`internal/ip`): Sophisticated IP extraction with header priority:
    - `CF-Connecting-IP` (Cloudflare - highest priority)
@@ -61,6 +62,7 @@ myip/
 - **Multi-Protocol Support**: Handles both IPv4 and IPv6 addresses
 - **Private IP Detection**: Identifies private IP ranges (RFC 1918, RFC 3927, RFC 5735 for IPv4; RFC 4193, RFC 4291 for IPv6)
 - **Cloudflare Detection**: Automatically identifies requests routed through Cloudflare
+- **Interactive API Documentation**: Built-in Swagger UI with comprehensive OpenAPI specification
 - **Security-Focused**: Input validation and header sanitization
 - **Performance Optimized**: Minimal memory footprint and high throughput
 - **Container Ready**: Multi-architecture Docker support

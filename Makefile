@@ -18,9 +18,21 @@ help:
 
 ##@ Development
 
+## swagger: Generate Swagger documentation
+.PHONY: swagger
+swagger:
+	@echo "Generating Swagger documentation..."
+	@if command -v swag > /dev/null; then \
+		swag init -g main.go -o docs/; \
+	else \
+		echo "swag not found. Installing..."; \
+		go install github.com/swaggo/swag/cmd/swag@latest; \
+		swag init -g main.go -o docs/; \
+	fi
+
 ## build: Build the application
 .PHONY: build
-build:
+build: swagger
 	@echo "Building $(BINARY_NAME)..."
 	go build $(LDFLAGS) -o $(BINARY_NAME) .
 
@@ -173,6 +185,7 @@ clean:
 	@rm -f coverage.out coverage.html
 	@rm -f *.test
 	@rm -f *.log
+	@rm -f docs/docs.go docs/swagger.json docs/swagger.yaml
 
 ## deps: Download and verify dependencies
 .PHONY: deps
@@ -216,10 +229,11 @@ ci-setup:
 	@echo "Setting up CI environment..."
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 	go install golang.org/x/lint/golint@latest
+	go install github.com/swaggo/swag/cmd/swag@latest
 
 ## ci-test: Run CI tests
 .PHONY: ci-test
-ci-test: deps vet staticcheck test-race
+ci-test: deps swagger vet staticcheck test-race
 
 ## security: Run security checks
 .PHONY: security
@@ -233,7 +247,7 @@ security:
 
 ## all: Run all checks and build
 .PHONY: all
-all: clean deps check build test-cover
+all: clean deps swagger check build test-cover
 
 .PHONY: version
 version:

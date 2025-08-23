@@ -13,6 +13,7 @@ A lightweight, fast HTTP service for detecting client IP addresses with comprehe
 - 🌐 **Multi-Protocol Support**: Detects both IPv4 and IPv6 addresses
 - 🔍 **Comprehensive Header Analysis**: Supports all major proxy headers (Cloudflare, nginx, Apache, etc.)
 - 🏷️ **Multiple Output Formats**: Plain text, JSON, and detailed information endpoints
+- 📚 **Interactive API Documentation**: Built-in Swagger UI with OpenAPI specification
 - 🛡️ **Security Focused**: Identifies private IPs, proxy chains, and Cloudflare detection
 - 🚀 **High Performance**: Lightweight Go implementation with minimal dependencies
 - 📊 **Health Monitoring**: Built-in health check endpoint
@@ -52,6 +53,15 @@ Download the latest binary from the [releases page](https://github.com/akhfa/myi
 | `/json` | Comprehensive JSON response | `application/json` |
 | `/headers` | All HTTP headers and IP details | `text/plain` |
 | `/health` | Health check endpoint | `application/json` |
+| `/swagger/` | Interactive API documentation | `text/html` |
+
+## API Documentation
+
+This service provides comprehensive API documentation through Swagger/OpenAPI:
+
+- **Interactive Documentation**: Visit `/swagger/` for a web-based API explorer
+- **OpenAPI Specification**: Available at `/swagger/doc.json` for programmatic access
+- **API Testing**: Use the Swagger UI to test endpoints directly from your browser
 
 ### Examples
 
@@ -91,6 +101,15 @@ $ curl https://ip.example.com/json
   "user_agent": "curl/7.68.0",
   "timestamp": "2023-12-01T12:00:00Z"
 }
+```
+
+#### Access API Documentation
+```bash
+# Open interactive Swagger UI in browser
+open http://localhost:8080/swagger/
+
+# Get OpenAPI specification
+curl http://localhost:8080/swagger/doc.json
 ```
 
 ## Supported Headers
