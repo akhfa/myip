@@ -3,7 +3,8 @@
 [![Build Status](https://github.com/akhfa/myip/workflows/Release/badge.svg)](https://github.com/akhfa/myip/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/akhfa/myip)](https://goreportcard.com/report/github.com/akhfa/myip)
 [![codecov](https://codecov.io/gh/akhfa/myip/branch/main/graph/badge.svg)](https://codecov.io/gh/akhfa/myip)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=akhfa_myip&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=akhfa_myip)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker Pulls](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://github.com/akhfa/myip/pkgs/container/myip)
 
 A lightweight, fast HTTP service for detecting client IP addresses with comprehensive proxy header support and detailed IP information.
@@ -389,7 +390,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## License
 
-This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Support
 
