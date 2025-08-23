@@ -96,6 +96,19 @@ fmt:
 	@echo "Formatting code..."
 	go fmt ./...
 
+## fmt-check: Check if code is formatted (fails if not)
+.PHONY: fmt-check
+fmt-check:
+	@echo "Checking code formatting..."
+	@if [ -n "$$(gofmt -l -s .)" ]; then \
+		echo "The following files are not formatted:"; \
+		gofmt -l -s .; \
+		echo "Please run 'make fmt' to fix formatting issues."; \
+		exit 1; \
+	else \
+		echo "All files are properly formatted."; \
+	fi
+
 ## vet: Run go vet
 .PHONY: vet
 vet:
@@ -124,7 +137,7 @@ staticcheck:
 
 ## check: Run all code quality checks
 .PHONY: check
-check: fmt vet lint staticcheck test
+check: fmt-check vet lint staticcheck test
 
 ##@ Build & Release
 
@@ -245,7 +258,7 @@ ci-setup:
 
 ## ci-test: Run CI tests
 .PHONY: ci-test
-ci-test: deps swagger vet staticcheck test-race
+ci-test: deps swagger fmt-check vet staticcheck test-race
 
 ## security: Run security checks
 .PHONY: security

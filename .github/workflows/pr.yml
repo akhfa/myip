@@ -45,6 +45,9 @@ jobs:
       - name: Download and verify dependencies
         run: make deps
 
+      - name: Check Go formatting
+        run: make fmt-check
+
       - name: Build application
         run: make build
 

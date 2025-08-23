@@ -14,12 +14,12 @@ func Load() *Config {
 	if port == "" {
 		port = "8080"
 	}
-	
+
 	host := os.Getenv("HOST")
 	if host == "" {
 		host = "localhost:8080"
 	}
-	
+
 	return &Config{
 		Port: port,
 		Host: host,

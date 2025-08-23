@@ -4,11 +4,11 @@ import (
 	"log"
 	"net/http"
 	"time"
-	
+
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"myip/docs"
 	"myip/internal/config"
 	"myip/internal/handlers"
-	"myip/docs"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 // @title MyIP API
@@ -38,11 +38,11 @@ func setupRoutes() {
 
 func createServer(cfg *config.Config) *http.Server {
 	return &http.Server{
-		Addr:           cfg.GetAddr(),
-		Handler:        nil, // Use default ServeMux
-		ReadTimeout:    15 * time.Second,
-		WriteTimeout:   15 * time.Second,
-		IdleTimeout:    60 * time.Second,
+		Addr:              cfg.GetAddr(),
+		Handler:           nil, // Use default ServeMux
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 }
@@ -50,12 +50,12 @@ func createServer(cfg *config.Config) *http.Server {
 func main() {
 
 	cfg := config.Load()
-	
+
 	// Update Swagger host dynamically
 	docs.SwaggerInfo.Host = cfg.Host
-	
+
 	setupRoutes()
-	
+
 	server := createServer(cfg)
 
 	log.Printf("Server starting on port %s", cfg.Port)

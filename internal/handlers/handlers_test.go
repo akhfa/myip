@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	
+
 	"myip/internal/models"
 )
 
@@ -37,7 +37,7 @@ func TestIPv4Handler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			req.RemoteAddr = test.remoteAddr
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -100,7 +100,7 @@ func TestIPv6Handler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/ipv6", nil)
 			req.RemoteAddr = test.remoteAddr
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -309,7 +309,7 @@ func TestIPv4HandlerErrorCases(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			req.RemoteAddr = test.remoteAddr
-			
+
 			for key, value := range test.headers {
 				req.Header.Set(key, value)
 			}
@@ -386,12 +386,12 @@ func TestInfoHandlerEmptyIPv6(t *testing.T) {
 	}
 
 	body := rr.Body.String()
-	
+
 	// Should contain IPv4 info but not IPv6
 	if !strings.Contains(body, "IPv4 Address: 192.168.1.1") {
 		t.Error("Expected IPv4 address in response")
 	}
-	
+
 	// Should not contain IPv6 line since it's empty
 	if strings.Contains(body, "IPv6 Address:") {
 		t.Error("Should not contain IPv6 address line when IPv6 is empty")
@@ -415,12 +415,12 @@ func TestInfoHandlerEmptyIPv4(t *testing.T) {
 	}
 
 	body := rr.Body.String()
-	
+
 	// Should contain IPv6 info but not IPv4
 	if !strings.Contains(body, "IPv6 Address: 2001:db8::1") {
 		t.Error("Expected IPv6 address in response")
 	}
-	
+
 	// Should not contain IPv4 line since it's empty
 	if strings.Contains(body, "IPv4 Address:") {
 		t.Error("Should not contain IPv4 address line when IPv4 is empty")
