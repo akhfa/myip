@@ -1,0 +1,58 @@
+name: Smoke Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    name: Run Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download dependencies
+        run: make deps
+
+      - name: Run smoke tests
+        id: smoke-test
+        run: |
+          echo "Running smoke tests against live deployment..."
+          echo "Target deployment: https://ip.2ak.me"
+          echo "Started at: $(date)"
+          echo ""
+          
+          # Run the smoke test using make command
+          make smoke-test
+        
+      - name: Test Results Summary
+        if: always()
+        run: |
+          echo "=== Smoke Test Summary ==="
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Completed at: $(date)"
+          
+          if [ "${{ steps.smoke-test.outcome }}" == "success" ]; then
+            echo "✅ SMOKE TEST PASSED - Deployment is working correctly"
+            echo "All IP detection endpoints are functioning as expected"
+          else
+            echo "❌ SMOKE TEST FAILED - Deployment has issues"
+            echo "IP detection mismatch detected - check logs above"
+          fi
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Smoke test failed - deployment may have issues"
+          echo "::error::Check the test output above for specific failures"
+          echo "::error::Common issues: IP detection mismatch, endpoint unavailable, network connectivity"

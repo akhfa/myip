@@ -77,6 +77,7 @@ The codebase demonstrates excellent testing practices:
 - **Edge Case Testing**: Invalid inputs, malformed addresses, error conditions
 - **Benchmark Tests**: Performance testing for critical functions
 - **Integration Tests**: End-to-end API endpoint testing
+- **Smoke Tests**: Live deployment validation against external IP services
 
 ### Code Structure
 - **Clean separation of concerns**: Organized into logical packages by responsibility
@@ -109,3 +110,11 @@ The application automatically generates comprehensive API documentation:
 - Interactive Swagger UI available at `/swagger/` endpoint
 - OpenAPI specification generated during build process via `make swagger`
 - Documentation included in all CI/CD builds for consistency
+
+### Smoke Testing Integration
+The project includes automated smoke testing capabilities:
+- **Live Deployment Validation**: Tests against production deployment at `https://ip.2ak.me`
+- **External IP Comparison**: Validates IP detection accuracy against `api.ipify.org` services
+- **JSON Field Validation**: Specifically tests `ipv4_address` and `ipv6_address` fields in JSON responses
+- **GitHub Actions Integration**: Manual workflow dispatch for remote testing
+- **Strict Validation**: Zero tolerance for IP detection discrepancies

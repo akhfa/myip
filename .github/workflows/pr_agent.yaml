@@ -22,8 +22,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENROUTER__KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-          config.model: "openrouter/qwen/qwen3-coder:free"
-          config.fallback_models: '["openrouter/deepseek/deepseek-r1:free"]'
+          config.model: "openrouter/deepseek/deepseek-chat-v3.1"
+          config.fallback_models: '["openrouter/qwen/qwen3-coder"]'
           config.custom_model_max_tokens: "32000"
 
           github_action_config.auto_review: "true"
