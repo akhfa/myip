@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"myip/internal/models"
 )
 
 const (
@@ -85,9 +88,9 @@ func TestSmokeTestManualTrigger(t *testing.T) {
 		}
 		t.Logf("Detected IPv4 from deployment: %s", detectedIPv4)
 
-		// Compare results
+		// Compare results - must match exactly
 		if actualIPv4 != detectedIPv4 {
-			t.Errorf("IPv4 mismatch: expected %s, got %s", actualIPv4, detectedIPv4)
+			t.Errorf("IPv4 mismatch: ipify.org reports %s, deployment reports %s - they must match exactly", actualIPv4, detectedIPv4)
 		} else {
 			t.Logf("✅ IPv4 detection SUCCESS: %s matches expected", detectedIPv4)
 		}
@@ -138,19 +141,77 @@ func TestSmokeTestManualTrigger(t *testing.T) {
 		}
 		t.Logf("Detected IPv6 from deployment: %s", detectedIPv6)
 
-		// Compare results
+		// Compare results - must match exactly
 		if actualIPv6 != detectedIPv6 {
-			t.Errorf("IPv6 mismatch: expected %s, got %s", actualIPv6, detectedIPv6)
+			t.Errorf("IPv6 mismatch: ipify.org reports %s, deployment reports %s - they must match exactly", actualIPv6, detectedIPv6)
 		} else {
 			t.Logf("✅ IPv6 detection SUCCESS: %s matches expected", detectedIPv6)
 		}
+	})
+
+	// Test JSON endpoint with detailed comparison
+	t.Run("JSONEndpointValidation", func(t *testing.T) {
+		t.Log("Testing JSON endpoint with IP comparison...")
+
+		// Re-retrieve actual IPv4 from ipify before JSON comparison
+		actualIPv4, err := getPublicIP(client, ipifyIPv4URL)
+		if err != nil {
+			t.Fatalf("Failed to re-retrieve IPv4 from ipify.org: %v", err)
+		}
+		t.Logf("Fresh IPv4 from ipify.org for JSON test: %s", actualIPv4)
+
+		// Get JSON response from deployment
+		resp, err := client.Get(smokeTestURL + "/json")
+		if err != nil {
+			t.Fatalf("Failed to access /json endpoint: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("JSON endpoint returned status %d, expected 200", resp.StatusCode)
+		}
+
+		// Check content type
+		if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
+			t.Errorf("Expected Content-Type 'application/json', got '%s'", ct)
+		}
+
+		// Parse JSON response
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Failed to read JSON response: %v", err)
+		}
+
+		var jsonResponse models.IPInfo
+		if err := json.Unmarshal(body, &jsonResponse); err != nil {
+			t.Fatalf("Failed to parse JSON response: %v", err)
+		}
+
+		t.Logf("JSON Response - Client IP: %s, Detected Via: %s", jsonResponse.ClientIP, jsonResponse.DetectedVia)
+
+		// Compare IPv4 addresses - must match exactly
+		if jsonResponse.ClientIP != actualIPv4 {
+			t.Errorf("JSON IPv4 mismatch: ipify.org reports %s, deployment JSON reports %s - they must match exactly", actualIPv4, jsonResponse.ClientIP)
+		} else {
+			t.Logf("✅ JSON IPv4 detection SUCCESS: %s matches expected", jsonResponse.ClientIP)
+		}
+
+		// Validate JSON structure and required fields
+		if jsonResponse.DetectedVia == "" {
+			t.Error("DetectedVia field should not be empty")
+		}
+		if jsonResponse.Timestamp == "" {
+			t.Error("Timestamp field should not be empty")
+		}
+
+		t.Logf("✅ JSON endpoint validation completed successfully")
 	})
 
 	// Test basic endpoint accessibility
 	t.Run("EndpointAccessibility", func(t *testing.T) {
 		t.Log("Testing basic endpoint accessibility...")
 
-		endpoints := []string{"/health", "/info", "/json", "/headers"}
+		endpoints := []string{"/health", "/info", "/headers"}
 		for _, endpoint := range endpoints {
 			resp, err := client.Get(smokeTestURL + endpoint)
 			if err != nil {
@@ -171,6 +232,7 @@ func TestSmokeTestManualTrigger(t *testing.T) {
 	t.Log("Deployment validation results:")
 	t.Log("  ✅ IPv4 detection accuracy verified")
 	t.Log("  ✅ IPv6 detection tested (if available)")
+	t.Log("  ✅ JSON endpoint validation completed")
 	t.Log("  ✅ Basic endpoint accessibility confirmed")
 	t.Log("=== LIVE DEPLOYMENT VALIDATED ===")
 }

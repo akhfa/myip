@@ -223,22 +223,25 @@ go test -run TestSmokeTestManualTrigger -v
 **Smoke Test Validation:**
 - ✅ **IPv4 Detection Accuracy**: Compares your public IPv4 from `api.ipify.org` with deployment detection
 - ✅ **IPv6 Detection Accuracy**: Compares your public IPv6 from `api64.ipify.org` with deployment detection (if available)  
-- ✅ **Endpoint Accessibility**: Validates all core endpoints (`/health`, `/info`, `/json`, `/headers`) are accessible
+- ✅ **JSON Endpoint Validation**: Tests `/json` endpoint with fresh IP retrieval and validates JSON response structure
+- ✅ **Endpoint Accessibility**: Validates all core endpoints (`/health`, `/info`, `/headers`) are accessible
 
 **How It Works:**
 1. **Get Real Public IP**: Fetches your actual public IPv4/IPv6 from ipify.org services
-2. **Test Deployment**: Accesses `ip.2ak.me/` and `/ipv6` endpoints  
-3. **Compare Results**: Ensures deployment correctly detects the same IP as external services
-4. **Validate Success**: Test passes when both services report identical IP addresses
+2. **Test Deployment**: Accesses `ip.2ak.me/`, `/ipv6`, and `/json` endpoints  
+3. **Compare Results**: Validates deployment detects **exactly** the same IP as external services
+4. **JSON Validation**: Re-retrieves IP from ipify before testing `/json` endpoint and validates response structure
+5. **Strict Matching**: Test **fails** if IPs don't match exactly - no tolerance for differences
 
 **Live Deployment Validation:**
-The smoke test performs **accuracy validation** against the actual production deployment:
-- ✅ **Real IP Detection**: Verifies deployment detects your actual public IP correctly
-- ✅ **IPv4/IPv6 Support**: Tests both protocol versions with proper fallback handling
+The smoke test performs **strict accuracy validation** against the actual production deployment:
+- ✅ **Exact IP Matching**: Requires deployment to detect **identical** IP as ipify.org
+- ✅ **IPv4/IPv6 Support**: Tests both protocol versions with exact comparison
+- ✅ **JSON Response Validation**: Confirms `/json` endpoint returns consistent data
 - ✅ **Production Environment**: Validates live deployment configuration and accessibility
 - ✅ **Network Connectivity**: Confirms real-world network behavior and response times
 
-This focused approach ensures the deployed service **accurately detects client IPs** in the real production environment.
+This focused approach ensures the deployed service **exactly matches** external IP detection services with zero tolerance for differences.
 
 ## CI/CD Pipeline
 
