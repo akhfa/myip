@@ -77,20 +77,23 @@ func TestSmokeTest(t *testing.T) {
 		// Get actual IPv4 from ipify
 		actualIPv4, err := getPublicIP(client, ipifyIPv4URL)
 		if err != nil {
-			t.Fatalf("Failed to get IPv4 from ipify.org: %v", err)
+			t.Fatalf("❌ Failed to get IPv4 from ipify.org: %v", err)
 		}
-		t.Logf("Actual IPv4 from ipify.org: %s", actualIPv4)
+		t.Logf("✅ Retrieved IPv4 from ipify.org: %s", actualIPv4)
 
 		// Get IPv4 from our deployment
 		detectedIPv4, err := getMyIPResponse(client, "/")
 		if err != nil {
-			t.Fatalf("Failed to get IPv4 from deployment: %v", err)
+			t.Fatalf("❌ Failed to get IPv4 from deployment: %v", err)
 		}
-		t.Logf("Detected IPv4 from deployment: %s", detectedIPv4)
+		t.Logf("✅ Retrieved IPv4 from deployment: %s", detectedIPv4)
 
 		// Compare results - must match exactly
 		if actualIPv4 != detectedIPv4 {
-			t.Errorf("IPv4 mismatch: ipify.org reports %s, deployment reports %s - they must match exactly", actualIPv4, detectedIPv4)
+			t.Errorf("❌ IPv4 DETECTION FAILED")
+			t.Errorf("   Expected (ipify.org): %s", actualIPv4)
+			t.Errorf("   Actual (deployment):  %s", detectedIPv4)
+			t.Errorf("   ❗ IPs must match exactly - deployment is not detecting correct client IP")
 		} else {
 			t.Logf("✅ IPv4 detection SUCCESS: %s matches expected", detectedIPv4)
 		}
@@ -128,7 +131,10 @@ func TestSmokeTest(t *testing.T) {
 				if strings.Contains(bodyStr, "No IPv6") || strings.Contains(bodyStr, "not found") {
 					t.Logf("✅ IPv6 detection SUCCESS: Deployment correctly indicates no IPv6: %s", bodyStr)
 				} else {
-					t.Errorf("Expected deployment to indicate no IPv6 available, got: %s", bodyStr)
+					t.Errorf("❌ IPv6 ENDPOINT BEHAVIOR FAILED")
+					t.Errorf("   Expected: 404 status or 'No IPv6' message")
+					t.Errorf("   Actual: %s", bodyStr)
+					t.Errorf("   ❗ Deployment should indicate when IPv6 is not available")
 				}
 			}
 			return
@@ -143,7 +149,10 @@ func TestSmokeTest(t *testing.T) {
 
 		// Compare results - must match exactly
 		if actualIPv6 != detectedIPv6 {
-			t.Errorf("IPv6 mismatch: ipify.org reports %s, deployment reports %s - they must match exactly", actualIPv6, detectedIPv6)
+			t.Errorf("❌ IPv6 DETECTION FAILED")
+			t.Errorf("   Expected (ipify.org): %s", actualIPv6)
+			t.Errorf("   Actual (deployment):  %s", detectedIPv6)
+			t.Errorf("   ❗ IPs must match exactly - deployment is not detecting correct client IP")
 		} else {
 			t.Logf("✅ IPv6 detection SUCCESS: %s matches expected", detectedIPv6)
 		}
@@ -156,9 +165,9 @@ func TestSmokeTest(t *testing.T) {
 		// Re-retrieve actual IPv4 from ipify before JSON comparison
 		actualIPv4, err := getPublicIP(client, ipifyIPv4URL)
 		if err != nil {
-			t.Fatalf("Failed to re-retrieve IPv4 from ipify.org: %v", err)
+			t.Fatalf("❌ Failed to re-retrieve IPv4 from ipify.org: %v", err)
 		}
-		t.Logf("Fresh IPv4 from ipify.org for JSON test: %s", actualIPv4)
+		t.Logf("✅ Fresh IPv4 from ipify.org for JSON test: %s", actualIPv4)
 
 		// Get JSON response from deployment
 		resp, err := client.Get(smokeTestURL + "/json")
@@ -168,12 +177,17 @@ func TestSmokeTest(t *testing.T) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			t.Fatalf("JSON endpoint returned status %d, expected 200", resp.StatusCode)
+			t.Fatalf("❌ JSON endpoint returned status %d, expected 200", resp.StatusCode)
 		}
+		t.Logf("✅ JSON endpoint accessible (status: %d)", resp.StatusCode)
 
 		// Check content type
 		if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
-			t.Errorf("Expected Content-Type 'application/json', got '%s'", ct)
+			t.Errorf("❌ JSON CONTENT TYPE FAILED")
+			t.Errorf("   Expected: application/json")
+			t.Errorf("   Actual: %s", ct)
+		} else {
+			t.Logf("✅ JSON content type correct: %s", ct)
 		}
 
 		// Parse JSON response
@@ -191,17 +205,28 @@ func TestSmokeTest(t *testing.T) {
 
 		// Compare IPv4 addresses - must match exactly
 		if jsonResponse.ClientIP != actualIPv4 {
-			t.Errorf("JSON IPv4 mismatch: ipify.org reports %s, deployment JSON reports %s - they must match exactly", actualIPv4, jsonResponse.ClientIP)
+			t.Errorf("❌ JSON ENDPOINT DETECTION FAILED")
+			t.Errorf("   Expected (ipify.org): %s", actualIPv4)
+			t.Errorf("   Actual (JSON endpoint): %s", jsonResponse.ClientIP)
+			t.Errorf("   Detection method: %s", jsonResponse.DetectedVia)
+			t.Errorf("   ❗ JSON endpoint must return same IP as plain text endpoints")
 		} else {
-			t.Logf("✅ JSON IPv4 detection SUCCESS: %s matches expected", jsonResponse.ClientIP)
+			t.Logf("✅ JSON endpoint detection SUCCESS: %s matches expected", jsonResponse.ClientIP)
 		}
 
 		// Validate JSON structure and required fields
 		if jsonResponse.DetectedVia == "" {
-			t.Error("DetectedVia field should not be empty")
+			t.Errorf("❌ JSON STRUCTURE VALIDATION FAILED")
+			t.Errorf("   DetectedVia field is empty - JSON response is missing required field")
+		} else {
+			t.Logf("✅ DetectedVia field populated: %s", jsonResponse.DetectedVia)
 		}
+		
 		if jsonResponse.Timestamp == "" {
-			t.Error("Timestamp field should not be empty")
+			t.Errorf("❌ JSON STRUCTURE VALIDATION FAILED")
+			t.Errorf("   Timestamp field is empty - JSON response is missing required field")
+		} else {
+			t.Logf("✅ Timestamp field populated: %s", jsonResponse.Timestamp)
 		}
 
 		t.Logf("✅ JSON endpoint validation completed successfully")
@@ -215,15 +240,22 @@ func TestSmokeTest(t *testing.T) {
 		for _, endpoint := range endpoints {
 			resp, err := client.Get(smokeTestURL + endpoint)
 			if err != nil {
-				t.Errorf("Failed to access %s: %v", endpoint, err)
+				t.Errorf("❌ ENDPOINT CONNECTION FAILED")
+				t.Errorf("   Endpoint: %s", endpoint)
+				t.Errorf("   Error: %v", err)
+				t.Errorf("   ❗ Cannot connect to endpoint - network or server issue")
 				continue
 			}
 			resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
-				t.Errorf("Endpoint %s returned status %d, expected 200", endpoint, resp.StatusCode)
+				t.Errorf("❌ ENDPOINT ACCESSIBILITY FAILED")
+				t.Errorf("   Endpoint: %s", endpoint)
+				t.Errorf("   Expected status: 200")
+				t.Errorf("   Actual status: %d", resp.StatusCode)
+				t.Errorf("   ❗ Endpoint is not accessible or returning errors")
 			} else {
-				t.Logf("✅ Endpoint %s accessible", endpoint)
+				t.Logf("✅ Endpoint %s accessible (status: %d)", endpoint, resp.StatusCode)
 			}
 		}
 	})
