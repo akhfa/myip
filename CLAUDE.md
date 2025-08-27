@@ -25,6 +25,8 @@ myip/
 │   │   └── detector_test.go  # IP detection unit tests
 │   └── models/               # Data structures and models
 │       └── models.go         # IPInfo and HealthResponse types
+├── test/                     # Test packages
+│   └── smoke_test.go         # Live deployment smoke tests
 └── main_test.go              # Integration tests
 ```
 
