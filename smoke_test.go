@@ -169,6 +169,18 @@ func TestSmokeTest(t *testing.T) {
 		}
 		t.Logf("✅ Fresh IPv4 from ipify.org for JSON test: %s", actualIPv4)
 
+		// Also get IPv6 for validation
+		actualIPv6, err := getPublicIP(client, ipifyIPv6URL)
+		if err != nil {
+			t.Logf("ℹ️  Could not get IPv6 from ipify.org: %v", err)
+			actualIPv6 = ""
+		} else if strings.Contains(actualIPv6, ".") && !strings.Contains(actualIPv6, ":") {
+			t.Logf("ℹ️  No IPv6 connectivity (ipify returned IPv4: %s)", actualIPv6)
+			actualIPv6 = ""
+		} else {
+			t.Logf("✅ Fresh IPv6 from ipify.org for JSON test: %s", actualIPv6)
+		}
+
 		// Get JSON response from deployment
 		resp, err := client.Get(smokeTestURL + "/json")
 		if err != nil {
@@ -203,16 +215,34 @@ func TestSmokeTest(t *testing.T) {
 
 		t.Logf("JSON Response - Client IP: %s, Detected Via: %s", jsonResponse.ClientIP, jsonResponse.DetectedVia)
 
-		// Compare IPv4 addresses - must match exactly
-		if jsonResponse.ClientIP != actualIPv4 {
-			t.Errorf("❌ JSON ENDPOINT DETECTION FAILED")
+		// Compare IPv4 address field - must match exactly
+		if jsonResponse.IPv4Address != actualIPv4 {
+			t.Errorf("❌ JSON IPv4 FIELD DETECTION FAILED")
 			t.Errorf("   Expected (ipify.org): %s", actualIPv4)
-			t.Errorf("   Actual (JSON endpoint): %s", jsonResponse.ClientIP)
+			t.Errorf("   Actual (ipv4_address field): %s", jsonResponse.IPv4Address)
 			t.Errorf("   Detection method: %s", jsonResponse.DetectedVia)
-			t.Errorf("   ❗ JSON endpoint must return same IP as plain text endpoints")
+			t.Errorf("   ❗ JSON ipv4_address field must match ipify.org result")
 		} else {
-			t.Logf("✅ JSON endpoint detection SUCCESS: %s matches expected", jsonResponse.ClientIP)
+			t.Logf("✅ JSON IPv4 field detection SUCCESS: %s matches expected", jsonResponse.IPv4Address)
 		}
+
+		// Validate IPv6 address field if we have IPv6 connectivity
+		if actualIPv6 != "" {
+			if jsonResponse.IPv6Address != actualIPv6 {
+				t.Errorf("❌ JSON IPv6 FIELD DETECTION FAILED")
+				t.Errorf("   Expected (ipify.org): %s", actualIPv6)
+				t.Errorf("   Actual (ipv6_address field): %s", jsonResponse.IPv6Address)
+				t.Errorf("   ❗ JSON ipv6_address field must match ipify.org result")
+			} else {
+				t.Logf("✅ JSON IPv6 field detection SUCCESS: %s matches expected", jsonResponse.IPv6Address)
+			}
+		} else {
+			// No IPv6 connectivity, just log the IPv6 field value
+			t.Logf("ℹ️  IPv6 field (no IPv6 connectivity to validate): %s", jsonResponse.IPv6Address)
+		}
+
+		// Log client_ip for reference but don't validate it
+		t.Logf("ℹ️  Client IP field (for reference): %s", jsonResponse.ClientIP)
 
 		// Validate JSON structure and required fields
 		if jsonResponse.DetectedVia == "" {
