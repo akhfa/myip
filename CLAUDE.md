@@ -89,6 +89,7 @@ The codebase demonstrates excellent testing practices:
 - **Robust error handling**: Consistent error patterns throughout
 - **Type safety**: Proper struct definitions with Go best practices
 - **Internal packages**: Uses Go's internal package pattern to prevent external imports
+- **Go fmt**: Always run go fmt after creating or modifying .go files
 
 ## CI/CD Integration
 
