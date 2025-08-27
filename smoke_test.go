@@ -54,9 +54,9 @@ func getMyIPResponse(client *http.Client, endpoint string) (string, error) {
 	return strings.TrimSpace(string(body)), nil
 }
 
-// TestSmokeTestManualTrigger is the main smoke test that validates IP detection accuracy
-// Run with: go test -run TestSmokeTestManualTrigger -v
-func TestSmokeTestManualTrigger(t *testing.T) {
+// TestSmokeTest is the main smoke test that validates IP detection accuracy
+// Run with: go test -run TestSmokeTest -v
+func TestSmokeTest(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping smoke test in short mode")
 	}
