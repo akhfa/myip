@@ -4,10 +4,11 @@ This document describes the comprehensive CI/CD pipeline setup for the My IP Go 
 
 ## Overview
 
-The CI/CD pipeline consists of two main workflows:
+The CI/CD pipeline consists of three main workflows:
 
 1. **Pull Request Workflow** (`.github/workflows/pr.yml`) - Runs on PR creation/updates
 2. **Release Workflow** (`.github/workflows/release.yml`) - Runs on pushes to master/main and tags
+3. **Smoke Test Workflow** (`.github/workflows/smoke-test.yml`) - Manual deployment validation
 
 ## Workflow Details
 
@@ -18,6 +19,24 @@ The CI/CD pipeline consists of two main workflows:
 **Jobs:**
 - **Test Job**: Runs comprehensive testing using Makefile commands for consistency
 - **Docker Build Job**: Builds Docker image using Makefile (without pushing)
+
+### Smoke Test Workflow
+
+**Triggered on:** Manual workflow dispatch (`workflow_dispatch`)
+
+**Purpose:** Validates live deployment accuracy against external IP services
+
+**Jobs:**
+- **Smoke Test Job**: Tests production deployment at `https://ip.2ak.me`
+
+**Features:**
+- **Live Deployment Testing**: Validates IP detection against external services
+- **IPv4/IPv6 Validation**: Tests both `ipv4_address` and `ipv6_address` JSON fields
+- **External IP Comparison**: Compares results with `api.ipify.org` services
+- **Manual Trigger**: On-demand execution via GitHub Actions interface
+- **Strict Validation**: Zero tolerance for IP detection discrepancies
+
+### Pull Request Workflow (continued)
 
 **Features:**
 - **Makefile Integration**: All build and test steps use standardized Makefile commands

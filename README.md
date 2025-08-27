@@ -217,31 +217,53 @@ The application includes focused smoke tests that validate **IP detection accura
 make smoke-test
 
 # Alternative direct command
-go test -run TestSmokeTestManualTrigger -v
+go test -run TestSmokeTest -v
+
+# Run via GitHub Actions (manual workflow dispatch)
+# Go to Actions tab → Smoke Test → Run workflow
 ```
 
 **Smoke Test Validation:**
 - ✅ **IPv4 Detection Accuracy**: Compares your public IPv4 from `api.ipify.org` with deployment detection
 - ✅ **IPv6 Detection Accuracy**: Compares your public IPv6 from `api64.ipify.org` with deployment detection (if available)  
-- ✅ **JSON Endpoint Validation**: Tests `/json` endpoint with fresh IP retrieval and validates JSON response structure
+- ✅ **JSON Field Validation**: Tests `/json` endpoint `ipv4_address` and `ipv6_address` fields against ipify.org results
 - ✅ **Endpoint Accessibility**: Validates all core endpoints (`/health`, `/info`, `/headers`) are accessible
 
 **How It Works:**
 1. **Get Real Public IP**: Fetches your actual public IPv4/IPv6 from ipify.org services
 2. **Test Deployment**: Accesses `ip.2ak.me/`, `/ipv6`, and `/json` endpoints  
 3. **Compare Results**: Validates deployment detects **exactly** the same IP as external services
-4. **JSON Validation**: Re-retrieves IP from ipify before testing `/json` endpoint and validates response structure
+4. **JSON Field Validation**: Re-retrieves IP from ipify before testing `/json` endpoint and validates `ipv4_address` and `ipv6_address` fields
 5. **Strict Matching**: Test **fails** if IPs don't match exactly - no tolerance for differences
 
 **Live Deployment Validation:**
 The smoke test performs **strict accuracy validation** against the actual production deployment:
 - ✅ **Exact IP Matching**: Requires deployment to detect **identical** IP as ipify.org
 - ✅ **IPv4/IPv6 Support**: Tests both protocol versions with exact comparison
-- ✅ **JSON Response Validation**: Confirms `/json` endpoint returns consistent data
+- ✅ **JSON Field Validation**: Confirms `/json` endpoint `ipv4_address` and `ipv6_address` fields match external services
 - ✅ **Production Environment**: Validates live deployment configuration and accessibility
 - ✅ **Network Connectivity**: Confirms real-world network behavior and response times
 
 This focused approach ensures the deployed service **exactly matches** external IP detection services with zero tolerance for differences.
+
+### GitHub Actions Integration
+
+The smoke test can be executed remotely via GitHub Actions using workflow dispatch:
+
+1. **Navigate to Actions Tab**: Go to the repository's Actions tab
+2. **Select Smoke Test Workflow**: Click on "Smoke Test" workflow
+3. **Run Workflow**: Click "Run workflow" button
+4. **Add Description** (optional): Provide a description for the test run
+5. **View Results**: Monitor the workflow execution and view detailed logs
+
+**Workflow Features:**
+- ✅ **Manual Trigger**: On-demand execution via workflow dispatch
+- ✅ **Timeout Protection**: 10-minute maximum execution time  
+- ✅ **Detailed Logging**: Comprehensive test output and summaries
+- ✅ **Status Reporting**: Clear pass/fail indicators with error notifications
+- ✅ **Environment Info**: Shows test description, target URL, and timing
+
+This allows remote validation of the deployment without requiring local setup.
 
 ## CI/CD Pipeline
 
