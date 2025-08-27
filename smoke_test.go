@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"testing"
@@ -113,7 +114,8 @@ func TestSmokeTest(t *testing.T) {
 		t.Logf("Actual IPv6 from ipify.org: %s", actualIPv6)
 
 		// Check if ipify returned an IPv4 address (indicating no IPv6 connectivity)
-		if strings.Contains(actualIPv6, ".") && !strings.Contains(actualIPv6, ":") {
+		ip := net.ParseIP(actualIPv6)
+		if ip == nil || ip.To4() != nil {
 			t.Logf("⚠️  ipify.org returned IPv4 (%s) instead of IPv6 - no IPv6 connectivity available", actualIPv6)
 
 			// Our deployment should also return 404 or "No IPv6 address found"
@@ -126,7 +128,10 @@ func TestSmokeTest(t *testing.T) {
 			if resp.StatusCode == http.StatusNotFound {
 				t.Log("✅ IPv6 detection SUCCESS: Deployment correctly returns 404 when no IPv6 available")
 			} else {
-				body, _ := io.ReadAll(resp.Body)
+				body, err := io.ReadAll(resp.Body)
+				if err != nil {
+					t.Fatalf("Failed to read IPv6 endpoint response: %v", err)
+				}
 				bodyStr := strings.TrimSpace(string(body))
 				if strings.Contains(bodyStr, "No IPv6") || strings.Contains(bodyStr, "not found") {
 					t.Logf("✅ IPv6 detection SUCCESS: Deployment correctly indicates no IPv6: %s", bodyStr)
@@ -174,11 +179,15 @@ func TestSmokeTest(t *testing.T) {
 		if err != nil {
 			t.Logf("ℹ️  Could not get IPv6 from ipify.org: %v", err)
 			actualIPv6 = ""
-		} else if strings.Contains(actualIPv6, ".") && !strings.Contains(actualIPv6, ":") {
-			t.Logf("ℹ️  No IPv6 connectivity (ipify returned IPv4: %s)", actualIPv6)
-			actualIPv6 = ""
 		} else {
-			t.Logf("✅ Fresh IPv6 from ipify.org for JSON test: %s", actualIPv6)
+			// Use proper IP parsing
+			ip := net.ParseIP(actualIPv6)
+			if ip == nil || ip.To4() != nil {
+				t.Logf("ℹ️  No IPv6 connectivity (ipify returned IPv4: %s)", actualIPv6)
+				actualIPv6 = ""
+			} else {
+				t.Logf("✅ Fresh IPv6 from ipify.org for JSON test: %s", actualIPv6)
+			}
 		}
 
 		// Get JSON response from deployment
