@@ -29,40 +29,33 @@ jobs:
           echo "Target deployment: https://ip.2ak.me"
           echo "Started at: $(date)"
           echo ""
-          
+
           # Run the smoke test using make command
           make smoke-test
-        
+
       - name: Test Results Summary
         if: always()
         run: |
           cat >> $GITHUB_STEP_SUMMARY << EOF
           # Smoke Test Summary
-          
+
           - **Workflow:** ${{ github.workflow }}
           - **Run ID:** ${{ github.run_id }}
           - **Triggered by:** ${{ github.actor }}
           - **Completed at:** $(date)
-          
+
           EOF
-          
+
           if [ "${{ steps.smoke-test.outcome }}" == "success" ]; then
             cat >> $GITHUB_STEP_SUMMARY << EOF
           ## ✅ SMOKE TEST PASSED
-          
+
           Deployment is working correctly. All IP detection endpoints are functioning as expected.
           EOF
           else
             cat >> $GITHUB_STEP_SUMMARY << EOF
           ## ❌ SMOKE TEST FAILED
-          
+
           Deployment has issues. IP detection mismatch detected - check logs above.
           EOF
           fi
-
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "::error::Smoke test failed - deployment may have issues"
-          echo "::error::Check the test output above for specific failures"
-          echo "::error::Common issues: IP detection mismatch, endpoint unavailable, network connectivity"
