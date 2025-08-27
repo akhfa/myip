@@ -25,6 +25,8 @@ myip/
 │   │   └── detector_test.go  # IP detection unit tests
 │   └── models/               # Data structures and models
 │       └── models.go         # IPInfo and HealthResponse types
+├── test/                     # Test packages
+│   └── smoke_test.go         # Live deployment smoke tests
 └── main_test.go              # Integration tests
 ```
 
@@ -87,6 +89,7 @@ The codebase demonstrates excellent testing practices:
 - **Robust error handling**: Consistent error patterns throughout
 - **Type safety**: Proper struct definitions with Go best practices
 - **Internal packages**: Uses Go's internal package pattern to prevent external imports
+- **Go fmt**: Always run go fmt after creating or modifying .go files
 
 ## CI/CD Integration
 

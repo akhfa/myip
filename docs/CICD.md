@@ -27,7 +27,7 @@ The CI/CD pipeline consists of three main workflows:
 **Purpose:** Validates live deployment accuracy against external IP services
 
 **Jobs:**
-- **Smoke Test Job**: Tests production deployment at `https://ip.2ak.me`
+- **Smoke Test Job**: Tests production deployment at `https://ip.2ak.me` (runs in separate test package)
 
 **Features:**
 - **Live Deployment Testing**: Validates IP detection against external services

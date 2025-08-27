@@ -217,7 +217,7 @@ The application includes focused smoke tests that validate **IP detection accura
 make smoke-test
 
 # Alternative direct command
-go test -run TestSmokeTest -v
+go test -run TestSmokeTest -v ./test
 
 # Run via GitHub Actions (manual workflow dispatch)
 # Go to Actions tab → Smoke Test → Run workflow

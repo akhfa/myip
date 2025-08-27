@@ -92,7 +92,7 @@ bench:
 .PHONY: smoke-test
 smoke-test:
 	@echo "Running comprehensive smoke tests..."
-	go test -run TestSmokeTest -v
+	go test -run TestSmokeTest -v ./test
 
 ##@ Code Quality
 

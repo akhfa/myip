@@ -1,4 +1,4 @@
-package main
+package smoke_test
 
 import (
 	"encoding/json"
@@ -56,7 +56,7 @@ func getMyIPResponse(client *http.Client, endpoint string) (string, error) {
 }
 
 // TestSmokeTest is the main smoke test that validates IP detection accuracy
-// Run with: go test -run TestSmokeTest -v
+// Run with: go test -run TestSmokeTest -v ./test
 func TestSmokeTest(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping smoke test in short mode")
