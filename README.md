@@ -173,6 +173,7 @@ make test-race          # Run tests with race detector
 make test-cover         # Run tests with coverage
 make test-coverage-ci   # Run tests with coverage for CI (with race detector)
 make bench              # Run benchmarks
+make smoke-test         # Run comprehensive smoke tests (manual trigger)
 make fmt                # Format code
 make vet                # Run go vet
 make lint               # Run golint
@@ -191,6 +192,53 @@ make security-sarif     # Run security checks with SARIF output
 make ci-setup           # Setup CI environment (install tools)
 make ci-test            # Run CI tests (deps, swagger, vet, staticcheck, test-race)
 ```
+
+### Testing
+
+The project includes comprehensive test coverage with multiple testing strategies:
+
+#### Unit Tests
+```bash
+# Run all tests
+make test
+
+# Run tests with race detector
+make test-race
+
+# Run tests with coverage report
+make test-cover
+```
+
+#### Smoke Tests
+The application includes focused smoke tests that validate **IP detection accuracy** against the **live deployment** at `https://ip.2ak.me`:
+
+```bash
+# Run smoke tests manually (recommended for deployment validation)
+make smoke-test
+
+# Alternative direct command
+go test -run TestSmokeTestManualTrigger -v
+```
+
+**Smoke Test Validation:**
+- ✅ **IPv4 Detection Accuracy**: Compares your public IPv4 from `api.ipify.org` with deployment detection
+- ✅ **IPv6 Detection Accuracy**: Compares your public IPv6 from `api64.ipify.org` with deployment detection (if available)  
+- ✅ **Endpoint Accessibility**: Validates all core endpoints (`/health`, `/info`, `/json`, `/headers`) are accessible
+
+**How It Works:**
+1. **Get Real Public IP**: Fetches your actual public IPv4/IPv6 from ipify.org services
+2. **Test Deployment**: Accesses `ip.2ak.me/` and `/ipv6` endpoints  
+3. **Compare Results**: Ensures deployment correctly detects the same IP as external services
+4. **Validate Success**: Test passes when both services report identical IP addresses
+
+**Live Deployment Validation:**
+The smoke test performs **accuracy validation** against the actual production deployment:
+- ✅ **Real IP Detection**: Verifies deployment detects your actual public IP correctly
+- ✅ **IPv4/IPv6 Support**: Tests both protocol versions with proper fallback handling
+- ✅ **Production Environment**: Validates live deployment configuration and accessibility
+- ✅ **Network Connectivity**: Confirms real-world network behavior and response times
+
+This focused approach ensures the deployed service **accurately detects client IPs** in the real production environment.
 
 ## CI/CD Pipeline
 

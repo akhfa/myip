@@ -88,6 +88,12 @@ bench:
 	@echo "Running benchmarks..."
 	go test -bench=. -benchmem ./...
 
+## smoke-test: Run comprehensive smoke tests (manual trigger)
+.PHONY: smoke-test
+smoke-test:
+	@echo "Running comprehensive smoke tests..."
+	go test -run TestSmokeTestManualTrigger -v
+
 ##@ Code Quality
 
 ## fmt: Format code
