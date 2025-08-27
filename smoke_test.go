@@ -115,14 +115,14 @@ func TestSmokeTest(t *testing.T) {
 		// Check if ipify returned an IPv4 address (indicating no IPv6 connectivity)
 		if strings.Contains(actualIPv6, ".") && !strings.Contains(actualIPv6, ":") {
 			t.Logf("⚠️  ipify.org returned IPv4 (%s) instead of IPv6 - no IPv6 connectivity available", actualIPv6)
-			
+
 			// Our deployment should also return 404 or "No IPv6 address found"
 			resp, err := client.Get(smokeTestURL + "/ipv6")
 			if err != nil {
 				t.Fatalf("Failed to access /ipv6 endpoint: %v", err)
 			}
 			defer resp.Body.Close()
-			
+
 			if resp.StatusCode == http.StatusNotFound {
 				t.Log("✅ IPv6 detection SUCCESS: Deployment correctly returns 404 when no IPv6 available")
 			} else {
@@ -251,7 +251,7 @@ func TestSmokeTest(t *testing.T) {
 		} else {
 			t.Logf("✅ DetectedVia field populated: %s", jsonResponse.DetectedVia)
 		}
-		
+
 		if jsonResponse.Timestamp == "" {
 			t.Errorf("❌ JSON STRUCTURE VALIDATION FAILED")
 			t.Errorf("   Timestamp field is empty - JSON response is missing required field")
