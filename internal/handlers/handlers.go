@@ -5,11 +5,23 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"myip/internal/ip"
 	"myip/internal/models"
 )
+
+// isJSONFormat checks if format parameter equals "json" case-insensitively
+// Optimized for performance - avoids string allocation from ToLower()
+func isJSONFormat(format string) bool {
+	if len(format) != 4 {
+		return false
+	}
+	// Check each byte directly for maximum performance
+	return (format[0] == 'j' || format[0] == 'J') &&
+		(format[1] == 's' || format[1] == 'S') &&
+		(format[2] == 'o' || format[2] == 'O') &&
+		(format[3] == 'n' || format[3] == 'N')
+}
 
 // IPv4Handler handles requests for IPv4 addresses only
 // @Summary Get IPv4 address
@@ -30,9 +42,9 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if JSON format is requested (case-insensitive)
+	// Check if JSON format is requested (case-insensitive, optimized)
 	format := r.URL.Query().Get("format")
-	if strings.ToLower(format) == "json" {
+	if isJSONFormat(format) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{"ip": ipv4}
 		
@@ -68,9 +80,9 @@ func IPv6Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if JSON format is requested (case-insensitive)
+	// Check if JSON format is requested (case-insensitive, optimized)
 	format := r.URL.Query().Get("format")
-	if strings.ToLower(format) == "json" {
+	if isJSONFormat(format) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{"ip": ipv6}
 		
