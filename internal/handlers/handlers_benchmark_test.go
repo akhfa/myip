@@ -9,7 +9,7 @@ import (
 func BenchmarkIsJSONFormat(b *testing.B) {
 	testCases := []string{
 		"json",
-		"JSON", 
+		"JSON",
 		"Json",
 		"jSoN",
 		"xml",
@@ -17,7 +17,7 @@ func BenchmarkIsJSONFormat(b *testing.B) {
 		"",
 		"jsonformat", // longer string
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, format := range testCases {
@@ -30,7 +30,7 @@ func BenchmarkIsJSONFormat(b *testing.B) {
 func BenchmarkStringToLower(b *testing.B) {
 	testCases := []string{
 		"json",
-		"JSON", 
+		"JSON",
 		"Json",
 		"jSoN",
 		"xml",
@@ -38,7 +38,7 @@ func BenchmarkStringToLower(b *testing.B) {
 		"",
 		"jsonformat", // longer string
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, format := range testCases {
@@ -50,7 +50,7 @@ func BenchmarkStringToLower(b *testing.B) {
 // BenchmarkHandlerJSONCheck benchmarks the format check in context
 func BenchmarkHandlerJSONCheck(b *testing.B) {
 	formats := []string{"json", "JSON", "Json", "xml", ""}
-	
+
 	b.Run("Optimized", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
@@ -59,7 +59,7 @@ func BenchmarkHandlerJSONCheck(b *testing.B) {
 			}
 		}
 	})
-	
+
 	b.Run("StringsToLower", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {

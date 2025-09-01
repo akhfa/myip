@@ -47,7 +47,7 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 	if isJSONFormat(format) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{"ip": ipv4}
-		
+
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			log.Printf("Failed to encode JSON response for IPv4 %s: %v", ipv4, err)
 			http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
@@ -85,7 +85,7 @@ func IPv6Handler(w http.ResponseWriter, r *http.Request) {
 	if isJSONFormat(format) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{"ip": ipv6}
-		
+
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			log.Printf("Failed to encode JSON response for IPv6 %s: %v", ipv6, err)
 			http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
