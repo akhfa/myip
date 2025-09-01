@@ -462,3 +462,179 @@ func TestHeadersHandlerEmptyAddresses(t *testing.T) {
 		}
 	}
 }
+
+// TestIPv4HandlerJSONFormat tests the new format=json query parameter functionality
+func TestIPv4HandlerJSONFormat(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		headers      map[string]string
+		remoteAddr   string
+		expectedCode int
+		expectJSON   bool
+	}{
+		{
+			name:  "JSON format requested",
+			query: "?format=json",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
+			name:  "Plain text format (default)",
+			query: "",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   false,
+		},
+		{
+			name:  "Other format parameter ignored",
+			query: "?format=xml",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/"+test.query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv4Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedCode)
+			}
+
+			if test.expectJSON {
+				// Check content type
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "application/json" {
+					t.Errorf("Expected content type application/json, got %s", contentType)
+				}
+
+				// Parse and validate JSON response
+				var response map[string]string
+				if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+					t.Errorf("Failed to parse JSON response: %v", err)
+				}
+
+				// Verify JSON contains expected IPv4
+				if response["ip"] != "203.0.113.1" {
+					t.Errorf("Expected ip to be 203.0.113.1, got %s", response["ip"])
+				}
+			} else {
+				// Check content type for plain text
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "text/plain" {
+					t.Errorf("Expected content type text/plain, got %s", contentType)
+				}
+
+				// Check plain text response
+				body := rr.Body.String()
+				if !strings.Contains(body, "203.0.113.1") {
+					t.Errorf("Expected body to contain 203.0.113.1, got %s", body)
+				}
+			}
+		})
+	}
+}
+
+// TestIPv6HandlerJSONFormat tests the new format=json query parameter functionality for IPv6
+func TestIPv6HandlerJSONFormat(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		headers      map[string]string
+		remoteAddr   string
+		expectedCode int
+		expectJSON   bool
+	}{
+		{
+			name:  "JSON format requested with IPv6",
+			query: "?format=json",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
+			name:  "Plain text format with IPv6 (default)",
+			query: "",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/ipv6"+test.query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv6Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedCode)
+			}
+
+			if test.expectJSON {
+				// Check content type
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "application/json" {
+					t.Errorf("Expected content type application/json, got %s", contentType)
+				}
+
+				// Parse and validate JSON response
+				var response map[string]string
+				if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+					t.Errorf("Failed to parse JSON response: %v", err)
+				}
+
+				// Verify JSON contains expected IPv6
+				if response["ip"] != "2001:db8::1" {
+					t.Errorf("Expected ip to be 2001:db8::1, got %s", response["ip"])
+				}
+			} else {
+				// Check content type for plain text
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "text/plain" {
+					t.Errorf("Expected content type text/plain, got %s", contentType)
+				}
+
+				// Check plain text response
+				body := rr.Body.String()
+				if !strings.Contains(body, "2001:db8::1") {
+					t.Errorf("Expected body to contain 2001:db8::1, got %s", body)
+				}
+			}
+		})
+	}
+}
