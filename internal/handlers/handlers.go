@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"strings"
 
 	"myip/internal/ip"
 	"myip/internal/models"
@@ -11,7 +13,7 @@ import (
 
 // IPv4Handler handles requests for IPv4 addresses only
 // @Summary Get IPv4 address
-// @Description Returns the client's IPv4 address in plain text format, or JSON format if format=json query parameter is specified
+// @Description Returns the client's IPv4 address in plain text format, or JSON format if format=json query parameter is specified (case-insensitive)
 // @Tags IP Detection
 // @Accept json
 // @Produce plain,json
@@ -28,13 +30,14 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if JSON format is requested
+	// Check if JSON format is requested (case-insensitive)
 	format := r.URL.Query().Get("format")
-	if format == "json" {
+	if strings.ToLower(format) == "json" {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{"ip": ipv4}
 		
 		if err := json.NewEncoder(w).Encode(response); err != nil {
+			log.Printf("Failed to encode JSON response for IPv4 %s: %v", ipv4, err)
 			http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
 			return
 		}
@@ -48,7 +51,7 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 
 // IPv6Handler handles requests for IPv6 addresses only
 // @Summary Get IPv6 address
-// @Description Returns the client's IPv6 address in plain text format, or JSON format if format=json query parameter is specified
+// @Description Returns the client's IPv6 address in plain text format, or JSON format if format=json query parameter is specified (case-insensitive)
 // @Tags IP Detection
 // @Accept json
 // @Produce plain,json
@@ -65,13 +68,14 @@ func IPv6Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if JSON format is requested
+	// Check if JSON format is requested (case-insensitive)
 	format := r.URL.Query().Get("format")
-	if format == "json" {
+	if strings.ToLower(format) == "json" {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{"ip": ipv6}
 		
 		if err := json.NewEncoder(w).Encode(response); err != nil {
+			log.Printf("Failed to encode JSON response for IPv6 %s: %v", ipv6, err)
 			http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
 			return
 		}

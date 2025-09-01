@@ -494,6 +494,26 @@ func TestIPv4HandlerJSONFormat(t *testing.T) {
 			expectJSON:   false,
 		},
 		{
+			name:  "JSON format requested - uppercase",
+			query: "?format=JSON",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
+			name:  "JSON format requested - mixed case",
+			query: "?format=Json",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
 			name:  "Other format parameter ignored",
 			query: "?format=xml",
 			headers: map[string]string{
@@ -585,6 +605,26 @@ func TestIPv6HandlerJSONFormat(t *testing.T) {
 			remoteAddr:   "[2001:db8::1]:12345",
 			expectedCode: http.StatusOK,
 			expectJSON:   false,
+		},
+		{
+			name:  "JSON format requested with IPv6 - uppercase",
+			query: "?format=JSON",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
+			name:  "JSON format requested with IPv6 - mixed case",
+			query: "?format=Json",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
 		},
 	}
 
