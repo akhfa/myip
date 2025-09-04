@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -710,51 +711,112 @@ func TestIsJSONFormat(t *testing.T) {
 	}
 }
 
-// errorWriter is a writer that fails on write operations
-type errorWriter struct{}
-
-func (e *errorWriter) Write([]byte) (int, error) {
-	return 0, &customError{message: "write error"}
+// failingWriter is a custom ResponseWriter that fails on Write operations
+type failingWriter struct {
+	header     http.Header
+	written    bool
+	statusCode int
 }
 
-func (e *errorWriter) Header() http.Header {
-	return make(http.Header)
+func (fw *failingWriter) Header() http.Header {
+	if fw.header == nil {
+		fw.header = make(http.Header)
+	}
+	return fw.header
 }
 
-func (e *errorWriter) WriteHeader(int) {}
-
-// customError implements the error interface for testing
-type customError struct {
-	message string
+func (fw *failingWriter) Write(data []byte) (int, error) {
+	fw.written = true
+	// Check if this is the JSON response attempt (not the error response)
+	if !strings.Contains(string(data), "Failed to encode JSON response") {
+		return 0, fmt.Errorf("write failed")
+	}
+	// Let error responses through
+	return len(data), nil
 }
 
-func (e *customError) Error() string {
-	return e.message
+func (fw *failingWriter) WriteHeader(code int) {
+	fw.statusCode = code
 }
 
-// TestJSONEncodingErrors tests JSON encoding failures by using channels
+// TestJSONEncodingErrors tests JSON encoding error paths in handlers
 func TestJSONEncodingErrors(t *testing.T) {
-	// Test data that causes JSON encoding to fail - circular reference
-	type circularStruct struct {
-		Self *circularStruct `json:"self"`
-	}
 
-	circular := &circularStruct{}
-	circular.Self = circular // Creates circular reference that json.Marshal cannot handle
+	t.Run("IPv4Handler JSON encoding error", func(t *testing.T) {
+		// Create request with format=json
+		req := httptest.NewRequest("GET", "/?format=json", nil)
+		req.Header.Set("X-Real-IP", "192.168.1.100")
 
-	// Test encoding the circular struct directly
-	data := map[string]any{"circular": circular}
-	_, err := json.Marshal(data)
-	if err == nil {
-		t.Error("Expected JSON marshal to fail with circular reference")
-	}
+		fw := &failingWriter{}
 
-	// The error paths in handlers are actually hard to trigger with normal JSON encoding
-	// since map[string]string and models.HealthResponse are both easily serializable.
-	// The log.Printf statements will execute but the http.Error won't be reached
-	// in practice due to Go's robust JSON marshaling.
+		IPv4Handler(fw, req)
 
-	// This test demonstrates that the error paths exist and would be reached
-	// if JSON encoding actually failed, but they're defensive programming
-	// rather than realistic error scenarios.
+		if !fw.written {
+			t.Error("Expected write to be attempted")
+		}
+
+		// Check that the error response status was set
+		if fw.statusCode != http.StatusInternalServerError {
+			t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, fw.statusCode)
+		}
+
+		// Check that the error content type was set by http.Error
+		if fw.Header().Get("Content-Type") != "text/plain; charset=utf-8" {
+			t.Errorf("Expected Content-Type to be text/plain; charset=utf-8, got %s", fw.Header().Get("Content-Type"))
+		}
+	})
+
+	t.Run("IPv6Handler JSON encoding error", func(t *testing.T) {
+		// Create request with format=json
+		req := httptest.NewRequest("GET", "/?format=json", nil)
+		req.Header.Set("X-Real-IP", "2001:db8::1")
+
+		fw := &failingWriter{}
+
+		IPv6Handler(fw, req)
+
+		if !fw.written {
+			t.Error("Expected write to be attempted")
+		}
+
+		// Check that the error response status was set
+		if fw.statusCode != http.StatusInternalServerError {
+			t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, fw.statusCode)
+		}
+	})
+
+	t.Run("JSONHandler encoding error", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("X-Real-IP", "192.168.1.100")
+
+		fw := &failingWriter{}
+
+		JSONHandler(fw, req)
+
+		if !fw.written {
+			t.Error("Expected write to be attempted")
+		}
+
+		// Check that the error response status was set
+		if fw.statusCode != http.StatusInternalServerError {
+			t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, fw.statusCode)
+		}
+	})
+
+	t.Run("HealthHandler encoding error", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+
+		fw := &failingWriter{}
+
+		HealthHandler(fw, req)
+
+		if !fw.written {
+			t.Error("Expected write to be attempted")
+		}
+
+		// Check that the error response status was set
+		if fw.statusCode != http.StatusInternalServerError {
+			t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, fw.statusCode)
+		}
+	})
 }
