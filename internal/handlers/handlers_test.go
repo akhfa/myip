@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -461,4 +462,361 @@ func TestHeadersHandlerEmptyAddresses(t *testing.T) {
 			t.Errorf("Expected body to contain %q, but it didn't. Body: %s", expected, body)
 		}
 	}
+}
+
+// TestIPv4HandlerJSONFormat tests the new format=json query parameter functionality
+func TestIPv4HandlerJSONFormat(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		headers      map[string]string
+		remoteAddr   string
+		expectedCode int
+		expectJSON   bool
+	}{
+		{
+			name:  "JSON format requested",
+			query: "?format=json",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
+			name:  "Plain text format (default)",
+			query: "",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   false,
+		},
+		{
+			name:  "JSON format requested - uppercase",
+			query: "?format=JSON",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
+			name:  "JSON format requested - mixed case",
+			query: "?format=Json",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
+			name:  "Other format parameter ignored",
+			query: "?format=xml",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/"+test.query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv4Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedCode)
+			}
+
+			if test.expectJSON {
+				// Check content type
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "application/json" {
+					t.Errorf("Expected content type application/json, got %s", contentType)
+				}
+
+				// Parse and validate JSON response
+				var response map[string]string
+				if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+					t.Errorf("Failed to parse JSON response: %v", err)
+				}
+
+				// Verify JSON contains expected IPv4
+				if response["ip"] != "203.0.113.1" {
+					t.Errorf("Expected ip to be 203.0.113.1, got %s", response["ip"])
+				}
+			} else {
+				// Check content type for plain text
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "text/plain" {
+					t.Errorf("Expected content type text/plain, got %s", contentType)
+				}
+
+				// Check plain text response
+				body := rr.Body.String()
+				if !strings.Contains(body, "203.0.113.1") {
+					t.Errorf("Expected body to contain 203.0.113.1, got %s", body)
+				}
+			}
+		})
+	}
+}
+
+// TestIPv6HandlerJSONFormat tests the new format=json query parameter functionality for IPv6
+func TestIPv6HandlerJSONFormat(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		headers      map[string]string
+		remoteAddr   string
+		expectedCode int
+		expectJSON   bool
+	}{
+		{
+			name:  "JSON format requested with IPv6",
+			query: "?format=json",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
+			name:  "Plain text format with IPv6 (default)",
+			query: "",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   false,
+		},
+		{
+			name:  "JSON format requested with IPv6 - uppercase",
+			query: "?format=JSON",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+		{
+			name:  "JSON format requested with IPv6 - mixed case",
+			query: "?format=Json",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSON:   true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/ipv6"+test.query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv6Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedCode)
+			}
+
+			if test.expectJSON {
+				// Check content type
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "application/json" {
+					t.Errorf("Expected content type application/json, got %s", contentType)
+				}
+
+				// Parse and validate JSON response
+				var response map[string]string
+				if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+					t.Errorf("Failed to parse JSON response: %v", err)
+				}
+
+				// Verify JSON contains expected IPv6
+				if response["ip"] != "2001:db8::1" {
+					t.Errorf("Expected ip to be 2001:db8::1, got %s", response["ip"])
+				}
+			} else {
+				// Check content type for plain text
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "text/plain" {
+					t.Errorf("Expected content type text/plain, got %s", contentType)
+				}
+
+				// Check plain text response
+				body := rr.Body.String()
+				if !strings.Contains(body, "2001:db8::1") {
+					t.Errorf("Expected body to contain 2001:db8::1, got %s", body)
+				}
+			}
+		})
+	}
+}
+
+// Test the isJSONFormat function thoroughly
+func TestIsJSONFormat(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"json", true},
+		{"JSON", true},
+		{"Json", true},
+		{"jSoN", true},
+		{"JsOn", true},
+		{"xml", false},
+		{"text", false},
+		{"", false},
+		{"jsonformat", false}, // too long
+		{"jso", false},        // too short
+		{"html", false},
+		{"yaml", false},
+		{"j", false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			result := isJSONFormat(test.input)
+			if result != test.expected {
+				t.Errorf("isJSONFormat(%q) = %v, expected %v", test.input, result, test.expected)
+			}
+		})
+	}
+}
+
+// failingWriter is a custom ResponseWriter that fails on Write operations
+type failingWriter struct {
+	header     http.Header
+	written    bool
+	statusCode int
+}
+
+func (fw *failingWriter) Header() http.Header {
+	if fw.header == nil {
+		fw.header = make(http.Header)
+	}
+	return fw.header
+}
+
+func (fw *failingWriter) Write(data []byte) (int, error) {
+	fw.written = true
+	// Check if this is the JSON response attempt (not the error response)
+	if !strings.Contains(string(data), "Failed to encode JSON response") {
+		return 0, fmt.Errorf("write failed")
+	}
+	// Let error responses through
+	return len(data), nil
+}
+
+func (fw *failingWriter) WriteHeader(code int) {
+	fw.statusCode = code
+}
+
+// TestJSONEncodingErrors tests JSON encoding error paths in handlers
+func TestJSONEncodingErrors(t *testing.T) {
+
+	t.Run("IPv4Handler JSON encoding error", func(t *testing.T) {
+		// Create request with format=json
+		req := httptest.NewRequest("GET", "/?format=json", nil)
+		req.Header.Set("X-Real-IP", "192.168.1.100")
+
+		fw := &failingWriter{}
+
+		IPv4Handler(fw, req)
+
+		if !fw.written {
+			t.Error("Expected write to be attempted")
+		}
+
+		// Check that the error response status was set
+		if fw.statusCode != http.StatusInternalServerError {
+			t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, fw.statusCode)
+		}
+
+		// Check that the error content type was set by http.Error
+		if fw.Header().Get("Content-Type") != "text/plain; charset=utf-8" {
+			t.Errorf("Expected Content-Type to be text/plain; charset=utf-8, got %s", fw.Header().Get("Content-Type"))
+		}
+	})
+
+	t.Run("IPv6Handler JSON encoding error", func(t *testing.T) {
+		// Create request with format=json
+		req := httptest.NewRequest("GET", "/?format=json", nil)
+		req.Header.Set("X-Real-IP", "2001:db8::1")
+
+		fw := &failingWriter{}
+
+		IPv6Handler(fw, req)
+
+		if !fw.written {
+			t.Error("Expected write to be attempted")
+		}
+
+		// Check that the error response status was set
+		if fw.statusCode != http.StatusInternalServerError {
+			t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, fw.statusCode)
+		}
+	})
+
+	t.Run("JSONHandler encoding error", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("X-Real-IP", "192.168.1.100")
+
+		fw := &failingWriter{}
+
+		JSONHandler(fw, req)
+
+		if !fw.written {
+			t.Error("Expected write to be attempted")
+		}
+
+		// Check that the error response status was set
+		if fw.statusCode != http.StatusInternalServerError {
+			t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, fw.statusCode)
+		}
+	})
+
+	t.Run("HealthHandler encoding error", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+
+		fw := &failingWriter{}
+
+		HealthHandler(fw, req)
+
+		if !fw.written {
+			t.Error("Expected write to be attempted")
+		}
+
+		// Check that the error response status was set
+		if fw.statusCode != http.StatusInternalServerError {
+			t.Errorf("Expected status code %d, got %d", http.StatusInternalServerError, fw.statusCode)
+		}
+	})
 }

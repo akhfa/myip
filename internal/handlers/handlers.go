@@ -3,19 +3,35 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"myip/internal/ip"
 	"myip/internal/models"
 )
 
+// isJSONFormat checks if format parameter equals "json" case-insensitively
+// Optimized for performance - avoids string allocation from ToLower()
+func isJSONFormat(format string) bool {
+	if len(format) != 4 {
+		return false
+	}
+	// Check each byte directly for maximum performance
+	return (format[0] == 'j' || format[0] == 'J') &&
+		(format[1] == 's' || format[1] == 'S') &&
+		(format[2] == 'o' || format[2] == 'O') &&
+		(format[3] == 'n' || format[3] == 'N')
+}
+
 // IPv4Handler handles requests for IPv4 addresses only
 // @Summary Get IPv4 address
-// @Description Returns the client's IPv4 address in plain text format
+// @Description Returns the client's IPv4 address in plain text format, or JSON format if format=json query parameter is specified (case-insensitive)
 // @Tags IP Detection
 // @Accept json
-// @Produce plain
-// @Success 200 {string} string "IPv4 address"
+// @Produce plain,json
+// @Param format query string false "Response format (json for JSON response)"
+// @Success 200 {string} string "IPv4 address (plain text)"
+// @Success 200 {object} map[string]string "IP address in JSON format: {\"ip\": \"192.168.1.1\"}"
 // @Failure 404 {string} string "No IPv4 address found"
 // @Router / [get]
 func IPv4Handler(w http.ResponseWriter, r *http.Request) {
@@ -26,17 +42,34 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if JSON format is requested (case-insensitive, optimized)
+	format := r.URL.Query().Get("format")
+	if isJSONFormat(format) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]string{"ip": ipv4}
+
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			log.Printf("Failed to encode JSON response for IPv4 %s: %v", ipv4, err)
+			http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	// Default plain text response
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprint(w, ipv4)
 }
 
 // IPv6Handler handles requests for IPv6 addresses only
 // @Summary Get IPv6 address
-// @Description Returns the client's IPv6 address in plain text format
+// @Description Returns the client's IPv6 address in plain text format, or JSON format if format=json query parameter is specified (case-insensitive)
 // @Tags IP Detection
 // @Accept json
-// @Produce plain
-// @Success 200 {string} string "IPv6 address"
+// @Produce plain,json
+// @Param format query string false "Response format (json for JSON response)"
+// @Success 200 {string} string "IPv6 address (plain text)"
+// @Success 200 {object} map[string]string "IP address in JSON format: {\"ip\": \"2001:db8::1\"}"
 // @Failure 404 {string} string "No IPv6 address found"
 // @Router /ipv6 [get]
 func IPv6Handler(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +80,21 @@ func IPv6Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if JSON format is requested (case-insensitive, optimized)
+	format := r.URL.Query().Get("format")
+	if isJSONFormat(format) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]string{"ip": ipv6}
+
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			log.Printf("Failed to encode JSON response for IPv6 %s: %v", ipv6, err)
+			http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	// Default plain text response
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprint(w, ipv6)
 }
