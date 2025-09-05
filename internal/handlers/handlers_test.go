@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -1127,6 +1128,213 @@ func TestIPv6HandlerCallbackWithoutFormat(t *testing.T) {
 				if actualResponse != expectedResponse {
 					t.Errorf("Expected JSONP response %q, got %q", expectedResponse, actualResponse)
 				}
+			}
+		})
+	}
+}
+
+// TestSanitizeCallback tests the callback sanitization function for security
+func TestSanitizeCallback(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Valid simple callback",
+			input:    "myCallback",
+			expected: "myCallback",
+		},
+		{
+			name:     "Valid callback with underscore",
+			input:    "my_callback",
+			expected: "my_callback",
+		},
+		{
+			name:     "Valid callback with numbers",
+			input:    "callback123",
+			expected: "callback123",
+		},
+		{
+			name:     "Valid callback with dot notation",
+			input:    "window.myCallback",
+			expected: "window.myCallback",
+		},
+		{
+			name:     "Valid callback with dollar sign",
+			input:    "$callback",
+			expected: "$callback",
+		},
+		{
+			name:     "Empty callback defaults to 'callback'",
+			input:    "",
+			expected: "callback",
+		},
+		{
+			name:     "XSS attempt with script tag",
+			input:    "alert('XSS')",
+			expected: "callback",
+		},
+		{
+			name:     "XSS attempt with HTML",
+			input:    "<script>alert('XSS')</script>",
+			expected: "callback",
+		},
+		{
+			name:     "XSS attempt with semicolon",
+			input:    "callback;alert('XSS')",
+			expected: "callback",
+		},
+		{
+			name:     "Invalid callback with spaces",
+			input:    "my callback",
+			expected: "callback",
+		},
+		{
+			name:     "Invalid callback with special chars",
+			input:    "callback@#$%",
+			expected: "callback",
+		},
+		{
+			name:     "Invalid callback starting with number",
+			input:    "123callback",
+			expected: "callback",
+		},
+		{
+			name:     "Too long callback (>50 chars)",
+			input:    "thisIsAnExtremelyLongCallbackNameThatExceedsTheFiftyCharacterLimit",
+			expected: "callback",
+		},
+		{
+			name:     "JSON injection attempt",
+			input:    "callback\"}]);alert('XSS');//",
+			expected: "callback",
+		},
+		{
+			name:     "Path traversal attempt",
+			input:    "../../../callback",
+			expected: "callback",
+		},
+		{
+			name:     "SQL injection attempt",
+			input:    "callback'; DROP TABLE users; --",
+			expected: "callback",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := sanitizeCallback(test.input)
+			if result != test.expected {
+				t.Errorf("sanitizeCallback(%q) = %q, expected %q", test.input, result, test.expected)
+			}
+		})
+	}
+}
+
+// TestJSONPSecurityValidation tests JSONP endpoints for security vulnerabilities
+func TestJSONPSecurityValidation(t *testing.T) {
+	maliciousCallbacks := []string{
+		"alert('XSS')",
+		"</script><script>alert('XSS')</script>",
+		"callback;alert('XSS')",
+		"window.location='http://evil.com'",
+		"eval('malicious_code')",
+		"callback\"}]);alert('XSS');//",
+		"callback/**/(",
+		"callback();//",
+	}
+
+	for _, callback := range maliciousCallbacks {
+		t.Run("IPv4_malicious_callback_"+callback, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/?format=jsonp&callback="+callback, nil)
+			req.Header.Set("CF-Connecting-IP", "203.0.113.1")
+			
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv4Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusOK {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+			}
+
+			response := rr.Body.String()
+			
+			// Response should use sanitized 'callback' instead of malicious input
+			if !strings.HasPrefix(response, "callback({") {
+				t.Errorf("Expected response to start with 'callback({', got: %s", response)
+			}
+			
+			// Response should not contain the malicious callback
+			if strings.Contains(response, callback) && callback != "callback" {
+				t.Errorf("Response contains unsanitized malicious callback: %s", response)
+			}
+			
+			// Response should be valid JSON wrapped in callback
+			expectedPattern := regexp.MustCompile(`^callback\(\{"ip":"203\.0\.113\.1"\}\);$`)
+			if !expectedPattern.MatchString(response) {
+				t.Errorf("Response does not match expected secure pattern: %s", response)
+			}
+		})
+	}
+}
+
+// TestJSONPProperEncoding tests that IP addresses are properly JSON-encoded
+func TestJSONPProperEncoding(t *testing.T) {
+	tests := []struct {
+		name string
+		ip   string
+	}{
+		{
+			name: "Normal IP",
+			ip:   "192.168.1.1",
+		},
+		{
+			name: "Normal IP 2",
+			ip:   "203.0.113.1",
+		},
+		{
+			name: "IPv6 address", 
+			ip:   "2001:db8::1",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run("IPv4_encoding_"+test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/?format=jsonp&callback=testCallback", nil)
+			req.Header.Set("CF-Connecting-IP", test.ip)
+			
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv4Handler)
+			handler.ServeHTTP(rr, req)
+
+			response := rr.Body.String()
+			
+			// Extract JSON part from JSONP response
+			start := strings.Index(response, "(")
+			end := strings.LastIndex(response, ");")
+			if start == -1 || end == -1 {
+				t.Errorf("Invalid JSONP format: %s", response)
+				return
+			}
+			
+			jsonPart := response[start+1 : end]
+			
+			// Verify JSON is valid
+			var jsonObj map[string]string
+			err := json.Unmarshal([]byte(jsonPart), &jsonObj)
+			if err != nil {
+				t.Errorf("Invalid JSON in JSONP response: %s, error: %v", jsonPart, err)
+			}
+			
+			// Verify the JSON response contains a valid IP field (IP detection may normalize)
+			if jsonObj["ip"] == "" {
+				t.Errorf("IP address field is empty in JSON response: %s", jsonPart)
+			}
+			
+			// Verify response uses sanitized callback
+			if !strings.HasPrefix(response, "testCallback(") {
+				t.Errorf("Expected response to start with 'testCallback(', got: %s", response)
 			}
 		})
 	}

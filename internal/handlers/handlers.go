@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 
 	"myip/internal/ip"
 	"myip/internal/models"
@@ -37,6 +38,30 @@ func isJSONPFormat(format string) bool {
 		(format[4] == 'p' || format[4] == 'P')
 }
 
+// validCallbackRegex matches valid JavaScript identifier names for JSONP callbacks
+// Allows letters, digits, underscore, and dot notation (for object methods)
+var validCallbackRegex = regexp.MustCompile(`^[a-zA-Z_$][a-zA-Z0-9_$.]*$`)
+
+// sanitizeCallback ensures the callback parameter contains only valid JavaScript identifier characters
+// This prevents XSS attacks via callback parameter injection
+func sanitizeCallback(callback string) string {
+	if callback == "" {
+		return "callback"
+	}
+	
+	// Limit callback length to prevent abuse
+	if len(callback) > 50 {
+		return "callback"
+	}
+	
+	// Validate callback contains only safe JavaScript identifier characters
+	if !validCallbackRegex.MatchString(callback) {
+		return "callback"
+	}
+	
+	return callback
+}
+
 // IPv4Handler handles requests for IPv4 addresses only
 // @Summary Get IPv4 address
 // @Description Returns the client's IPv4 address in plain text format, JSON format if format=json, or JSONP format if format=jsonp is specified (case-insensitive). Callback parameter only works with format=jsonp.
@@ -64,12 +89,20 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Check if JSONP format is requested (case-insensitive, optimized)
 	if isJSONPFormat(format) {
-		if callback == "" {
-			callback = "callback"
-		}
-
+		sanitizedCallback := sanitizeCallback(callback)
+		
 		w.Header().Set("Content-Type", "application/javascript")
-		fmt.Fprintf(w, "%s({\"ip\":\"%s\"});", callback, ipv4)
+		
+		// Use proper JSON encoding to prevent injection attacks
+		response := map[string]string{"ip": ipv4}
+		jsonBytes, err := json.Marshal(response)
+		if err != nil {
+			log.Printf("Failed to encode JSONP response for IPv4 %s: %v", ipv4, err)
+			http.Error(w, "Failed to encode JSONP response", http.StatusInternalServerError)
+			return
+		}
+		
+		fmt.Fprintf(w, "%s(%s);", sanitizedCallback, string(jsonBytes))
 		return
 	}
 
@@ -118,12 +151,20 @@ func IPv6Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Check if JSONP format is requested (case-insensitive, optimized)
 	if isJSONPFormat(format) {
-		if callback == "" {
-			callback = "callback"
-		}
-
+		sanitizedCallback := sanitizeCallback(callback)
+		
 		w.Header().Set("Content-Type", "application/javascript")
-		fmt.Fprintf(w, "%s({\"ip\":\"%s\"});", callback, ipv6)
+		
+		// Use proper JSON encoding to prevent injection attacks
+		response := map[string]string{"ip": ipv6}
+		jsonBytes, err := json.Marshal(response)
+		if err != nil {
+			log.Printf("Failed to encode JSONP response for IPv6 %s: %v", ipv6, err)
+			http.Error(w, "Failed to encode JSONP response", http.StatusInternalServerError)
+			return
+		}
+		
+		fmt.Fprintf(w, "%s(%s);", sanitizedCallback, string(jsonBytes))
 		return
 	}
 
