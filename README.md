@@ -13,7 +13,7 @@ A lightweight, fast HTTP service for detecting client IP addresses with comprehe
 
 - 🌐 **Multi-Protocol Support**: Detects both IPv4 and IPv6 addresses
 - 🔍 **Comprehensive Header Analysis**: Supports all major proxy headers (Cloudflare, nginx, Apache, etc.)
-- 🏷️ **Multiple Output Formats**: Plain text, JSON, and detailed information endpoints with query parameter support
+- 🏷️ **Multiple Output Formats**: Plain text, JSON, and JSONP endpoints with flexible query parameter support
 - 📚 **Interactive API Documentation**: Built-in Swagger UI with OpenAPI specification
 - 🛡️ **Security Focused**: Identifies private IPs, proxy chains, and Cloudflare detection
 - 🚀 **High Performance**: Lightweight Go implementation with minimal dependencies
@@ -50,8 +50,12 @@ Download the latest binary from the [releases page](https://github.com/akhfa/myi
 |----------|-------------|---------------|
 | `/` | IPv4 address only | `text/plain` |
 | `/?format=json` | IPv4 address in JSON format | `application/json` |
+| `/?format=jsonp` | IPv4 address in JSONP format | `application/javascript` |
+| `/?format=jsonp&callback=getip` | IPv4 address in JSONP format with custom callback | `application/javascript` |
 | `/ipv6` | IPv6 address only (404 if not available) | `text/plain` |
 | `/ipv6?format=json` | IPv6 address in JSON format | `application/json` |
+| `/ipv6?format=jsonp` | IPv6 address in JSONP format | `application/javascript` |
+| `/ipv6?format=jsonp&callback=getip` | IPv6 address in JSONP format with custom callback | `application/javascript` |
 | `/info` | Detailed IP information | `text/plain` |
 | `/json` | Comprehensive JSON response | `application/json` |
 | `/headers` | All HTTP headers and IP details | `text/plain` |
@@ -90,6 +94,26 @@ $ curl https://ip.example.com/ipv6
 ```bash
 $ curl https://ip.example.com/ipv6?format=json
 {"ip":"2001:db8::1"}
+```
+
+#### Get IPv4 Address in JSONP Format
+```bash
+$ curl https://ip.example.com/?format=jsonp
+callback({"ip":"203.0.113.1"});
+
+# With custom callback function (requires format=jsonp)
+$ curl https://ip.example.com/?format=jsonp&callback=getip
+getip({"ip":"203.0.113.1"});
+```
+
+#### Get IPv6 Address in JSONP Format
+```bash
+$ curl https://ip.example.com/ipv6?format=jsonp
+callback({"ip":"2001:db8::1"});
+
+# With custom callback function (requires format=jsonp)
+$ curl https://ip.example.com/ipv6?format=jsonp&callback=getip
+getip({"ip":"2001:db8::1"});
 ```
 
 #### Get Detailed Information

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -706,6 +707,992 @@ func TestIsJSONFormat(t *testing.T) {
 			result := isJSONFormat(test.input)
 			if result != test.expected {
 				t.Errorf("isJSONFormat(%q) = %v, expected %v", test.input, result, test.expected)
+			}
+		})
+	}
+}
+
+// Test the isJSONPFormat function thoroughly
+func TestIsJSONPFormat(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"jsonp", true},
+		{"JSONP", true},
+		{"Jsonp", true},
+		{"jSoNp", true},
+		{"JsOnP", true},
+		{"json", false},
+		{"xml", false},
+		{"text", false},
+		{"", false},
+		{"jsonpformat", false}, // too long
+		{"jsonp1", false},      // too long
+		{"jsop", false},        // wrong content
+		{"jso", false},         // too short
+		{"html", false},
+		{"yaml", false},
+		{"j", false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			result := isJSONPFormat(test.input)
+			if result != test.expected {
+				t.Errorf("isJSONPFormat(%q) = %v, expected %v", test.input, result, test.expected)
+			}
+		})
+	}
+}
+
+// TestIPv4HandlerJSONPFormat tests the new format=jsonp query parameter functionality
+func TestIPv4HandlerJSONPFormat(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		headers      map[string]string
+		remoteAddr   string
+		expectedCode int
+		expectJSONP  bool
+		callback     string
+	}{
+		{
+			name:  "JSONP format requested - default callback",
+			query: "?format=jsonp",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSONP:  true,
+			callback:     "callback",
+		},
+		{
+			name:  "JSONP format requested - custom callback",
+			query: "?format=jsonp&callback=myCallback",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSONP:  true,
+			callback:     "myCallback",
+		},
+		{
+			name:  "JSONP format requested - uppercase",
+			query: "?format=JSONP&callback=testFunc",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSONP:  true,
+			callback:     "testFunc",
+		},
+		{
+			name:  "JSONP format requested - mixed case",
+			query: "?format=JsonP&callback=handleResponse",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectJSONP:  true,
+			callback:     "handleResponse",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/"+test.query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv4Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedCode)
+			}
+
+			if test.expectJSONP {
+				// Check content type
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "application/javascript" {
+					t.Errorf("Expected content type application/javascript, got %s", contentType)
+				}
+
+				// Check JSONP response format
+				expectedResponse := fmt.Sprintf("%s({\"ip\":\"203.0.113.1\"});", test.callback)
+				actualResponse := rr.Body.String()
+				if actualResponse != expectedResponse {
+					t.Errorf("Expected JSONP response %q, got %q", expectedResponse, actualResponse)
+				}
+			}
+		})
+	}
+}
+
+// TestIPv6HandlerJSONPFormat tests the new format=jsonp query parameter functionality for IPv6
+func TestIPv6HandlerJSONPFormat(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		headers      map[string]string
+		remoteAddr   string
+		expectedCode int
+		expectJSONP  bool
+		callback     string
+	}{
+		{
+			name:  "JSONP format requested with IPv6 - default callback",
+			query: "?format=jsonp",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSONP:  true,
+			callback:     "callback",
+		},
+		{
+			name:  "JSONP format requested with IPv6 - custom callback",
+			query: "?format=jsonp&callback=handleIPv6",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2a00:1450:400f:80d::200e",
+			},
+			remoteAddr:   "[2a00:1450:400f:80d::200e]:12345",
+			expectedCode: http.StatusOK,
+			expectJSONP:  true,
+			callback:     "handleIPv6",
+		},
+		{
+			name:  "JSONP format requested with IPv6 - uppercase",
+			query: "?format=JSONP&callback=processIPv6",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSONP:  true,
+			callback:     "processIPv6",
+		},
+		{
+			name:  "JSONP format requested with IPv6 - mixed case",
+			query: "?format=JsonP&callback=myFunction",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectJSONP:  true,
+			callback:     "myFunction",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/ipv6"+test.query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv6Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedCode)
+			}
+
+			if test.expectJSONP {
+				// Check content type
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "application/javascript" {
+					t.Errorf("Expected content type application/javascript, got %s", contentType)
+				}
+
+				// Check JSONP response format - use the IP from headers
+				expectedIP := test.headers["CF-Connecting-IP"]
+				expectedResponse := fmt.Sprintf("%s({\"ip\":\"%s\"});", test.callback, expectedIP)
+				actualResponse := rr.Body.String()
+				if actualResponse != expectedResponse {
+					t.Errorf("Expected JSONP response %q, got %q", expectedResponse, actualResponse)
+				}
+			}
+		})
+	}
+}
+
+// TestIPv4HandlerCallbackWithoutFormat tests callback parameter without format=jsonp (ipify.org behavior)
+func TestIPv4HandlerCallbackWithoutFormat(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		headers      map[string]string
+		remoteAddr   string
+		expectedCode int
+		expectPlain  bool // Should return plain text like ipify.org
+	}{
+		{
+			name:  "Callback without format parameter - returns plain text (ipify.org behavior)",
+			query: "?callback=getip",
+			headers: map[string]string{
+				"CF-Connecting-IP": "98.207.254.136",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectPlain:  true, // Should return plain text, not JSONP
+		},
+		{
+			name:  "Callback without format parameter - custom function name returns plain text",
+			query: "?callback=handleMyIP",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectPlain:  true, // Should return plain text, not JSONP
+		},
+		{
+			name:  "Callback with other format parameter - returns plain text",
+			query: "?callback=processIP&format=xml",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectPlain:  true, // Should return plain text, not JSONP
+		},
+		{
+			name:  "Empty callback parameter - returns plain text",
+			query: "?callback=",
+			headers: map[string]string{
+				"CF-Connecting-IP": "203.0.113.1",
+			},
+			remoteAddr:   "192.168.1.1:12345",
+			expectedCode: http.StatusOK,
+			expectPlain:  true, // Should return plain text
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/"+test.query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv4Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedCode)
+			}
+
+			expectedIP := test.headers["CF-Connecting-IP"]
+
+			if test.expectPlain {
+				// Should return plain text (ipify.org behavior)
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "text/plain" {
+					t.Errorf("Expected content type text/plain, got %s", contentType)
+				}
+
+				// Check plain text response
+				actualResponse := rr.Body.String()
+				if actualResponse != expectedIP {
+					t.Errorf("Expected plain text response %q, got %q", expectedIP, actualResponse)
+				}
+			} else {
+				// Should return JSONP format when format=jsonp is specified
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "application/javascript" {
+					t.Errorf("Expected content type application/javascript, got %s", contentType)
+				}
+
+				// Check JSONP response format
+				expectedResponse := fmt.Sprintf("callback({\"ip\":\"%s\"});", expectedIP)
+				actualResponse := rr.Body.String()
+				if actualResponse != expectedResponse {
+					t.Errorf("Expected JSONP response %q, got %q", expectedResponse, actualResponse)
+				}
+			}
+		})
+	}
+}
+
+// TestIPv6HandlerCallbackWithoutFormat tests callback parameter without format=jsonp for IPv6 (ipify.org behavior)
+func TestIPv6HandlerCallbackWithoutFormat(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		headers      map[string]string
+		remoteAddr   string
+		expectedCode int
+		expectPlain  bool // Should return plain text like ipify.org
+	}{
+		{
+			name:  "IPv6 callback without format parameter - returns plain text (ipify.org behavior)",
+			query: "?callback=getip",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2a00:1450:400f:80d::200e",
+			},
+			remoteAddr:   "[2a00:1450:400f:80d::200e]:12345",
+			expectedCode: http.StatusOK,
+			expectPlain:  true, // Should return plain text, not JSONP
+		},
+		{
+			name:  "IPv6 callback without format parameter - another custom function returns plain text",
+			query: "?callback=handleIPv6Response",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectPlain:  true, // Should return plain text, not JSONP
+		},
+		{
+			name:  "IPv6 callback with other format parameter - returns plain text",
+			query: "?callback=processIPv6&format=text",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectPlain:  true, // Should return plain text, not JSONP
+		},
+		{
+			name:  "IPv6 empty callback parameter - returns plain text",
+			query: "?callback=",
+			headers: map[string]string{
+				"CF-Connecting-IP": "2001:db8::1",
+			},
+			remoteAddr:   "[2001:db8::1]:12345",
+			expectedCode: http.StatusOK,
+			expectPlain:  true, // Should return plain text
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/ipv6"+test.query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv6Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedCode)
+			}
+
+			expectedIP := test.headers["CF-Connecting-IP"]
+
+			if test.expectPlain {
+				// Should return plain text (ipify.org behavior)
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "text/plain" {
+					t.Errorf("Expected content type text/plain, got %s", contentType)
+				}
+
+				// Check plain text response
+				actualResponse := rr.Body.String()
+				if actualResponse != expectedIP {
+					t.Errorf("Expected plain text response %q, got %q", expectedIP, actualResponse)
+				}
+			} else {
+				// Should return JSONP format when format=jsonp is specified
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "application/javascript" {
+					t.Errorf("Expected content type application/javascript, got %s", contentType)
+				}
+
+				// Check JSONP response format
+				expectedResponse := fmt.Sprintf("callback({\"ip\":\"%s\"});", expectedIP)
+				actualResponse := rr.Body.String()
+				if actualResponse != expectedResponse {
+					t.Errorf("Expected JSONP response %q, got %q", expectedResponse, actualResponse)
+				}
+			}
+		})
+	}
+}
+
+// TestSanitizeCallback tests the callback sanitization function for security
+func TestSanitizeCallback(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Valid simple callback",
+			input:    "myCallback",
+			expected: "myCallback",
+		},
+		{
+			name:     "Valid callback with underscore",
+			input:    "my_callback",
+			expected: "my_callback",
+		},
+		{
+			name:     "Valid callback with numbers",
+			input:    "callback123",
+			expected: "callback123",
+		},
+		{
+			name:     "Valid callback with dot notation",
+			input:    "window.myCallback",
+			expected: "window.myCallback",
+		},
+		{
+			name:     "Valid callback with dollar sign",
+			input:    "$callback",
+			expected: "$callback",
+		},
+		{
+			name:     "Empty callback defaults to 'callback'",
+			input:    "",
+			expected: "callback",
+		},
+		{
+			name:     "XSS attempt with script tag",
+			input:    "alert('XSS')",
+			expected: "callback",
+		},
+		{
+			name:     "XSS attempt with HTML",
+			input:    "<script>alert('XSS')</script>",
+			expected: "callback",
+		},
+		{
+			name:     "XSS attempt with semicolon",
+			input:    "callback;alert('XSS')",
+			expected: "callback",
+		},
+		{
+			name:     "Invalid callback with spaces",
+			input:    "my callback",
+			expected: "callback",
+		},
+		{
+			name:     "Invalid callback with special chars",
+			input:    "callback@#$%",
+			expected: "callback",
+		},
+		{
+			name:     "Invalid callback starting with number",
+			input:    "123callback",
+			expected: "callback",
+		},
+		{
+			name:     "Too long callback (>50 chars)",
+			input:    "thisIsAnExtremelyLongCallbackNameThatExceedsTheFiftyCharacterLimit",
+			expected: "callback",
+		},
+		{
+			name:     "JSON injection attempt",
+			input:    "callback\"}]);alert('XSS');//",
+			expected: "callback",
+		},
+		{
+			name:     "Path traversal attempt",
+			input:    "../../../callback",
+			expected: "callback",
+		},
+		{
+			name:     "SQL injection attempt",
+			input:    "callback'; DROP TABLE users; --",
+			expected: "callback",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := sanitizeCallback(test.input)
+			if result != test.expected {
+				t.Errorf("sanitizeCallback(%q) = %q, expected %q", test.input, result, test.expected)
+			}
+		})
+	}
+}
+
+// TestJSONPSecurityValidation tests JSONP endpoints for security vulnerabilities
+func TestJSONPSecurityValidation(t *testing.T) {
+	maliciousCallbacks := []string{
+		"alert('XSS')",
+		"</script><script>alert('XSS')</script>",
+		"callback;alert('XSS')",
+		"window.location='http://evil.com'",
+		"eval('malicious_code')",
+		"callback\"}]);alert('XSS');//",
+		"callback/**/(",
+		"callback();//",
+	}
+
+	for _, callback := range maliciousCallbacks {
+		t.Run("IPv4_malicious_callback_"+callback, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/?format=jsonp&callback="+callback, nil)
+			req.Header.Set("CF-Connecting-IP", "203.0.113.1")
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv4Handler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusOK {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+			}
+
+			response := rr.Body.String()
+
+			// Response should use sanitized 'callback' instead of malicious input
+			if !strings.HasPrefix(response, "callback({") {
+				t.Errorf("Expected response to start with 'callback({', got: %s", response)
+			}
+
+			// Response should not contain the malicious callback
+			if strings.Contains(response, callback) && callback != "callback" {
+				t.Errorf("Response contains unsanitized malicious callback: %s", response)
+			}
+
+			// Response should be valid JSON wrapped in callback
+			expectedPattern := regexp.MustCompile(`^callback\(\{"ip":"203\.0\.113\.1"\}\);$`)
+			if !expectedPattern.MatchString(response) {
+				t.Errorf("Response does not match expected secure pattern: %s", response)
+			}
+		})
+	}
+}
+
+// TestJSONPProperEncoding tests that IP addresses are properly JSON-encoded
+func TestJSONPProperEncoding(t *testing.T) {
+	tests := []struct {
+		name string
+		ip   string
+	}{
+		{
+			name: "Normal IP",
+			ip:   "192.168.1.1",
+		},
+		{
+			name: "Normal IP 2",
+			ip:   "203.0.113.1",
+		},
+		{
+			name: "IPv6 address",
+			ip:   "2001:db8::1",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run("IPv4_encoding_"+test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/?format=jsonp&callback=testCallback", nil)
+			req.Header.Set("CF-Connecting-IP", test.ip)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(IPv4Handler)
+			handler.ServeHTTP(rr, req)
+
+			response := rr.Body.String()
+
+			// Extract JSON part from JSONP response
+			start := strings.Index(response, "(")
+			end := strings.LastIndex(response, ");")
+			if start == -1 || end == -1 {
+				t.Errorf("Invalid JSONP format: %s", response)
+				return
+			}
+
+			jsonPart := response[start+1 : end]
+
+			// Verify JSON is valid
+			var jsonObj map[string]string
+			err := json.Unmarshal([]byte(jsonPart), &jsonObj)
+			if err != nil {
+				t.Errorf("Invalid JSON in JSONP response: %s, error: %v", jsonPart, err)
+			}
+
+			// Verify the JSON response contains a valid IP field (IP detection may normalize)
+			if jsonObj["ip"] == "" {
+				t.Errorf("IP address field is empty in JSON response: %s", jsonPart)
+			}
+
+			// Verify response uses sanitized callback
+			if !strings.HasPrefix(response, "testCallback(") {
+				t.Errorf("Expected response to start with 'testCallback(', got: %s", response)
+			}
+		})
+	}
+}
+
+// TestJSONPEdgeCases tests edge cases and potential error scenarios for JSONP handlers
+func TestJSONPEdgeCases(t *testing.T) {
+	tests := []struct {
+		name           string
+		endpoint       string
+		query          string
+		headers        map[string]string
+		remoteAddr     string
+		expectedCode   int
+		expectJSONP    bool
+		expectedPrefix string
+	}{
+		{
+			name:           "JSONP with long but valid callback (47 chars)",
+			endpoint:       "/",
+			query:          "?format=jsonp&callback=thisIsAVeryLongButValidCallbackNameWithinLimit",
+			headers:        map[string]string{"CF-Connecting-IP": "203.0.113.1"},
+			remoteAddr:     "192.168.1.1:12345",
+			expectedCode:   http.StatusOK,
+			expectJSONP:    true,
+			expectedPrefix: "thisIsAVeryLongButValidCallbackNameWithinLimit(",
+		},
+		{
+			name:           "JSONP with callback at exactly 50 character limit",
+			endpoint:       "/",
+			query:          "?format=jsonp&callback=thisIsExactlyFiftyCharactersLongAndShouldBeValidXY",
+			headers:        map[string]string{"CF-Connecting-IP": "203.0.113.1"},
+			remoteAddr:     "192.168.1.1:12345",
+			expectedCode:   http.StatusOK,
+			expectJSONP:    true,
+			expectedPrefix: "thisIsExactlyFiftyCharactersLongAndShouldBeValidXY(",
+		},
+		{
+			name:           "JSONP with callback over 50 character limit - gets sanitized",
+			endpoint:       "/",
+			query:          "?format=jsonp&callback=thisCallbackNameIsWayTooLongAndExceedsTheFiftyCharacterLimitSoItShouldGetSanitized",
+			headers:        map[string]string{"CF-Connecting-IP": "203.0.113.1"},
+			remoteAddr:     "192.168.1.1:12345",
+			expectedCode:   http.StatusOK,
+			expectJSONP:    true,
+			expectedPrefix: "callback(", // Should be sanitized to default
+		},
+		{
+			name:           "JSONP with complex valid callback including dots and underscores",
+			endpoint:       "/",
+			query:          "?format=jsonp&callback=window.myApp.handlers.processIP_v2",
+			headers:        map[string]string{"CF-Connecting-IP": "203.0.113.1"},
+			remoteAddr:     "192.168.1.1:12345",
+			expectedCode:   http.StatusOK,
+			expectJSONP:    true,
+			expectedPrefix: "window.myApp.handlers.processIP_v2(",
+		},
+		{
+			name:           "JSONP with callback starting with underscore",
+			endpoint:       "/",
+			query:          "?format=jsonp&callback=_privateCallback",
+			headers:        map[string]string{"CF-Connecting-IP": "203.0.113.1"},
+			remoteAddr:     "192.168.1.1:12345",
+			expectedCode:   http.StatusOK,
+			expectJSONP:    true,
+			expectedPrefix: "_privateCallback(",
+		},
+		{
+			name:           "JSONP with callback starting with dollar sign",
+			endpoint:       "/",
+			query:          "?format=jsonp&callback=$jqueryCallback",
+			headers:        map[string]string{"CF-Connecting-IP": "203.0.113.1"},
+			remoteAddr:     "192.168.1.1:12345",
+			expectedCode:   http.StatusOK,
+			expectJSONP:    true,
+			expectedPrefix: "$jqueryCallback(",
+		},
+		{
+			name:           "IPv6 JSONP with complex IPv6 address",
+			endpoint:       "/ipv6",
+			query:          "?format=jsonp&callback=handleComplexIPv6",
+			headers:        map[string]string{"CF-Connecting-IP": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"},
+			remoteAddr:     "[2001:0db8:85a3:0000:0000:8a2e:0370:7334]:12345",
+			expectedCode:   http.StatusOK,
+			expectJSONP:    true,
+			expectedPrefix: "handleComplexIPv6(",
+		},
+		{
+			name:           "JSONP format variations - different case combinations",
+			endpoint:       "/",
+			query:          "?format=jSoNp&callback=testCaseInsensitive",
+			headers:        map[string]string{"CF-Connecting-IP": "203.0.113.1"},
+			remoteAddr:     "192.168.1.1:12345",
+			expectedCode:   http.StatusOK,
+			expectJSONP:    true,
+			expectedPrefix: "testCaseInsensitive(",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", test.endpoint+test.query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+
+			var handler http.HandlerFunc
+			if test.endpoint == "/ipv6" {
+				handler = IPv6Handler
+			} else {
+				handler = IPv4Handler
+			}
+
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != test.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, test.expectedCode)
+			}
+
+			if test.expectJSONP {
+				// Check content type
+				contentType := rr.Header().Get("Content-Type")
+				if contentType != "application/javascript" {
+					t.Errorf("Expected content type application/javascript, got %s", contentType)
+				}
+
+				// Check response starts with expected prefix
+				response := rr.Body.String()
+				if !strings.HasPrefix(response, test.expectedPrefix) {
+					t.Errorf("Expected response to start with %q, got %q", test.expectedPrefix, response)
+				}
+
+				// Verify response ends with ");
+				if !strings.HasSuffix(response, ");") {
+					t.Errorf("Expected response to end with ');', got %q", response)
+				}
+
+				// Extract and validate JSON part
+				start := strings.Index(response, "(")
+				end := strings.LastIndex(response, ");")
+				if start == -1 || end == -1 {
+					t.Errorf("Invalid JSONP format: %s", response)
+					return
+				}
+
+				jsonPart := response[start+1 : end]
+				var jsonObj map[string]string
+				err := json.Unmarshal([]byte(jsonPart), &jsonObj)
+				if err != nil {
+					t.Errorf("Invalid JSON in JSONP response: %s, error: %v", jsonPart, err)
+				}
+
+				if jsonObj["ip"] == "" {
+					t.Errorf("IP field is empty in JSON response: %s", jsonPart)
+				}
+			}
+		})
+	}
+}
+
+// TestJSONPCallbackValidation tests comprehensive callback validation scenarios
+func TestJSONPCallbackValidation(t *testing.T) {
+	tests := []struct {
+		name             string
+		callback         string
+		expectedCallback string
+		description      string
+	}{
+		{
+			name:             "Valid simple callback",
+			callback:         "myCallback",
+			expectedCallback: "myCallback",
+			description:      "Should allow simple valid callback",
+		},
+		{
+			name:             "Valid callback with numbers",
+			callback:         "callback123",
+			expectedCallback: "callback123",
+			description:      "Should allow callbacks with numbers",
+		},
+		{
+			name:             "Valid callback with underscore",
+			callback:         "my_callback",
+			expectedCallback: "my_callback",
+			description:      "Should allow callbacks with underscores",
+		},
+		{
+			name:             "Valid callback with dots",
+			callback:         "window.myCallback",
+			expectedCallback: "window.myCallback",
+			description:      "Should allow callbacks with dot notation",
+		},
+		{
+			name:             "Valid callback with dollar",
+			callback:         "$callback",
+			expectedCallback: "$callback",
+			description:      "Should allow callbacks starting with dollar sign",
+		},
+		{
+			name:             "Invalid callback with spaces",
+			callback:         "my callback",
+			expectedCallback: "callback",
+			description:      "Should sanitize callbacks with spaces",
+		},
+		{
+			name:             "Invalid callback starting with number",
+			callback:         "123callback",
+			expectedCallback: "callback",
+			description:      "Should sanitize callbacks starting with numbers",
+		},
+		{
+			name:             "Invalid callback with special chars",
+			callback:         "callback@test",
+			expectedCallback: "callback",
+			description:      "Should sanitize callbacks with invalid special characters",
+		},
+		{
+			name:             "Empty callback",
+			callback:         "",
+			expectedCallback: "callback",
+			description:      "Should default to 'callback' for empty input",
+		},
+		{
+			name:             "XSS attempt",
+			callback:         "alert('xss')",
+			expectedCallback: "callback",
+			description:      "Should sanitize XSS attempts",
+		},
+		{
+			name:             "Script tag injection",
+			callback:         "<script>alert(1)</script>",
+			expectedCallback: "callback",
+			description:      "Should sanitize script tag injection attempts",
+		},
+		{
+			name:             "Complex valid callback",
+			callback:         "app.modules.ip.handlers.callback_v2",
+			expectedCallback: "app.modules.ip.handlers.callback_v2",
+			description:      "Should allow complex valid callbacks",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := sanitizeCallback(test.callback)
+			if result != test.expectedCallback {
+				t.Errorf("sanitizeCallback(%q) = %q, expected %q: %s",
+					test.callback, result, test.expectedCallback, test.description)
+			}
+		})
+	}
+}
+
+// TestJSONPWithDifferentIPTypes tests JSONP with various IP address formats
+func TestJSONPWithDifferentIPTypes(t *testing.T) {
+	tests := []struct {
+		name       string
+		endpoint   string
+		headers    map[string]string
+		remoteAddr string
+		callback   string
+	}{
+		{
+			name:       "JSONP with IPv4 loopback",
+			endpoint:   "/",
+			headers:    map[string]string{"X-Real-IP": "127.0.0.1"},
+			remoteAddr: "192.168.1.1:12345",
+			callback:   "handleLoopback",
+		},
+		{
+			name:       "JSONP with private IPv4",
+			endpoint:   "/",
+			headers:    map[string]string{"X-Real-IP": "10.0.0.1"},
+			remoteAddr: "192.168.1.1:12345",
+			callback:   "handlePrivate",
+		},
+		{
+			name:       "JSONP with IPv6 loopback",
+			endpoint:   "/ipv6",
+			headers:    map[string]string{"X-Real-IP": "::1"},
+			remoteAddr: "[::1]:12345",
+			callback:   "handleIPv6Loopback",
+		},
+		{
+			name:       "JSONP with private IPv6",
+			endpoint:   "/ipv6",
+			headers:    map[string]string{"X-Real-IP": "fd00::1"},
+			remoteAddr: "[fd00::1]:12345",
+			callback:   "handlePrivateIPv6",
+		},
+		{
+			name:       "JSONP with compressed IPv6",
+			endpoint:   "/ipv6",
+			headers:    map[string]string{"X-Real-IP": "2001:db8::1"},
+			remoteAddr: "[2001:db8::1]:12345",
+			callback:   "handleCompressedIPv6",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			query := fmt.Sprintf("?format=jsonp&callback=%s", test.callback)
+			req := httptest.NewRequest("GET", test.endpoint+query, nil)
+			req.RemoteAddr = test.remoteAddr
+
+			for key, value := range test.headers {
+				req.Header.Set(key, value)
+			}
+
+			rr := httptest.NewRecorder()
+
+			var handler http.HandlerFunc
+			if test.endpoint == "/ipv6" {
+				handler = IPv6Handler
+			} else {
+				handler = IPv4Handler
+			}
+
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusOK {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+			}
+
+			// Verify JSONP response format
+			response := rr.Body.String()
+			expectedPrefix := test.callback + "("
+			if !strings.HasPrefix(response, expectedPrefix) {
+				t.Errorf("Expected response to start with %q, got %q", expectedPrefix, response)
+			}
+
+			if !strings.HasSuffix(response, ");") {
+				t.Errorf("Expected response to end with ');', got %q", response)
+			}
+
+			// Verify content type
+			contentType := rr.Header().Get("Content-Type")
+			if contentType != "application/javascript" {
+				t.Errorf("Expected content type application/javascript, got %s", contentType)
+			}
+
+			// Extract and validate JSON
+			start := strings.Index(response, "(")
+			end := strings.LastIndex(response, ");")
+			jsonPart := response[start+1 : end]
+
+			var jsonObj map[string]string
+			err := json.Unmarshal([]byte(jsonPart), &jsonObj)
+			if err != nil {
+				t.Errorf("Invalid JSON in JSONP response: %s, error: %v", jsonPart, err)
+			}
+
+			if jsonObj["ip"] == "" {
+				t.Errorf("IP field is empty in JSON response: %s", jsonPart)
 			}
 		})
 	}
