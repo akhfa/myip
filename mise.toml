@@ -2,3 +2,4 @@
 cosign = "latest"
 go = "1.24"
 goreleaser = "2"
+"npm:@anthropic-ai/claude-code" = "latest"
