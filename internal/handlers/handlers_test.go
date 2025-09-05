@@ -930,7 +930,7 @@ func TestIPv6HandlerJSONPFormat(t *testing.T) {
 	}
 }
 
-// TestIPv4HandlerCallbackWithoutFormat tests callback parameter without format=jsonp
+// TestIPv4HandlerCallbackWithoutFormat tests callback parameter without format=jsonp (ipify.org behavior)
 func TestIPv4HandlerCallbackWithoutFormat(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -938,47 +938,47 @@ func TestIPv4HandlerCallbackWithoutFormat(t *testing.T) {
 		headers      map[string]string
 		remoteAddr   string
 		expectedCode int
-		callback     string
+		expectPlain  bool // Should return plain text like ipify.org
 	}{
 		{
-			name:  "Callback without format parameter - default callback",
+			name:  "Callback without format parameter - returns plain text (ipify.org behavior)",
 			query: "?callback=getip",
 			headers: map[string]string{
 				"CF-Connecting-IP": "98.207.254.136",
 			},
 			remoteAddr:   "192.168.1.1:12345",
 			expectedCode: http.StatusOK,
-			callback:     "getip",
+			expectPlain:  true, // Should return plain text, not JSONP
 		},
 		{
-			name:  "Callback without format parameter - custom function name",
+			name:  "Callback without format parameter - custom function name returns plain text",
 			query: "?callback=handleMyIP",
 			headers: map[string]string{
 				"CF-Connecting-IP": "203.0.113.1",
 			},
 			remoteAddr:   "192.168.1.1:12345",
 			expectedCode: http.StatusOK,
-			callback:     "handleMyIP",
+			expectPlain:  true, // Should return plain text, not JSONP
 		},
 		{
-			name:  "Callback with other format parameter - should use JSONP",
+			name:  "Callback with other format parameter - returns plain text",
 			query: "?callback=processIP&format=xml",
 			headers: map[string]string{
 				"CF-Connecting-IP": "203.0.113.1",
 			},
 			remoteAddr:   "192.168.1.1:12345",
 			expectedCode: http.StatusOK,
-			callback:     "processIP",
+			expectPlain:  true, // Should return plain text, not JSONP
 		},
 		{
-			name:  "Empty callback parameter - should fallback to plain text",
+			name:  "Empty callback parameter - returns plain text",
 			query: "?callback=",
 			headers: map[string]string{
 				"CF-Connecting-IP": "203.0.113.1",
 			},
 			remoteAddr:   "192.168.1.1:12345",
 			expectedCode: http.StatusOK,
-			callback:     "", // Empty callback means no JSONP
+			expectPlain:  true, // Should return plain text
 		},
 	}
 
@@ -1001,8 +1001,8 @@ func TestIPv4HandlerCallbackWithoutFormat(t *testing.T) {
 
 			expectedIP := test.headers["CF-Connecting-IP"]
 
-			if test.callback == "" {
-				// Should return plain text when callback is empty
+			if test.expectPlain {
+				// Should return plain text (ipify.org behavior)
 				contentType := rr.Header().Get("Content-Type")
 				if contentType != "text/plain" {
 					t.Errorf("Expected content type text/plain, got %s", contentType)
@@ -1014,14 +1014,14 @@ func TestIPv4HandlerCallbackWithoutFormat(t *testing.T) {
 					t.Errorf("Expected plain text response %q, got %q", expectedIP, actualResponse)
 				}
 			} else {
-				// Should return JSONP format when callback is provided
+				// Should return JSONP format when format=jsonp is specified
 				contentType := rr.Header().Get("Content-Type")
 				if contentType != "application/javascript" {
 					t.Errorf("Expected content type application/javascript, got %s", contentType)
 				}
 
 				// Check JSONP response format
-				expectedResponse := fmt.Sprintf("%s({\"ip\":\"%s\"});", test.callback, expectedIP)
+				expectedResponse := fmt.Sprintf("callback({\"ip\":\"%s\"});", expectedIP)
 				actualResponse := rr.Body.String()
 				if actualResponse != expectedResponse {
 					t.Errorf("Expected JSONP response %q, got %q", expectedResponse, actualResponse)
@@ -1031,7 +1031,7 @@ func TestIPv4HandlerCallbackWithoutFormat(t *testing.T) {
 	}
 }
 
-// TestIPv6HandlerCallbackWithoutFormat tests callback parameter without format=jsonp for IPv6
+// TestIPv6HandlerCallbackWithoutFormat tests callback parameter without format=jsonp for IPv6 (ipify.org behavior)
 func TestIPv6HandlerCallbackWithoutFormat(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -1039,47 +1039,47 @@ func TestIPv6HandlerCallbackWithoutFormat(t *testing.T) {
 		headers      map[string]string
 		remoteAddr   string
 		expectedCode int
-		callback     string
+		expectPlain  bool // Should return plain text like ipify.org
 	}{
 		{
-			name:  "IPv6 callback without format parameter - custom callback",
+			name:  "IPv6 callback without format parameter - returns plain text (ipify.org behavior)",
 			query: "?callback=getip",
 			headers: map[string]string{
 				"CF-Connecting-IP": "2a00:1450:400f:80d::200e",
 			},
 			remoteAddr:   "[2a00:1450:400f:80d::200e]:12345",
 			expectedCode: http.StatusOK,
-			callback:     "getip",
+			expectPlain:  true, // Should return plain text, not JSONP
 		},
 		{
-			name:  "IPv6 callback without format parameter - another custom function",
+			name:  "IPv6 callback without format parameter - another custom function returns plain text",
 			query: "?callback=handleIPv6Response",
 			headers: map[string]string{
 				"CF-Connecting-IP": "2001:db8::1",
 			},
 			remoteAddr:   "[2001:db8::1]:12345",
 			expectedCode: http.StatusOK,
-			callback:     "handleIPv6Response",
+			expectPlain:  true, // Should return plain text, not JSONP
 		},
 		{
-			name:  "IPv6 callback with other format parameter - should use JSONP",
+			name:  "IPv6 callback with other format parameter - returns plain text",
 			query: "?callback=processIPv6&format=text",
 			headers: map[string]string{
 				"CF-Connecting-IP": "2001:db8::1",
 			},
 			remoteAddr:   "[2001:db8::1]:12345",
 			expectedCode: http.StatusOK,
-			callback:     "processIPv6",
+			expectPlain:  true, // Should return plain text, not JSONP
 		},
 		{
-			name:  "IPv6 empty callback parameter - should fallback to plain text",
+			name:  "IPv6 empty callback parameter - returns plain text",
 			query: "?callback=",
 			headers: map[string]string{
 				"CF-Connecting-IP": "2001:db8::1",
 			},
 			remoteAddr:   "[2001:db8::1]:12345",
 			expectedCode: http.StatusOK,
-			callback:     "", // Empty callback means no JSONP
+			expectPlain:  true, // Should return plain text
 		},
 	}
 
@@ -1102,8 +1102,8 @@ func TestIPv6HandlerCallbackWithoutFormat(t *testing.T) {
 
 			expectedIP := test.headers["CF-Connecting-IP"]
 
-			if test.callback == "" {
-				// Should return plain text when callback is empty
+			if test.expectPlain {
+				// Should return plain text (ipify.org behavior)
 				contentType := rr.Header().Get("Content-Type")
 				if contentType != "text/plain" {
 					t.Errorf("Expected content type text/plain, got %s", contentType)
@@ -1115,14 +1115,14 @@ func TestIPv6HandlerCallbackWithoutFormat(t *testing.T) {
 					t.Errorf("Expected plain text response %q, got %q", expectedIP, actualResponse)
 				}
 			} else {
-				// Should return JSONP format when callback is provided
+				// Should return JSONP format when format=jsonp is specified
 				contentType := rr.Header().Get("Content-Type")
 				if contentType != "application/javascript" {
 					t.Errorf("Expected content type application/javascript, got %s", contentType)
 				}
 
 				// Check JSONP response format
-				expectedResponse := fmt.Sprintf("%s({\"ip\":\"%s\"});", test.callback, expectedIP)
+				expectedResponse := fmt.Sprintf("callback({\"ip\":\"%s\"});", expectedIP)
 				actualResponse := rr.Body.String()
 				if actualResponse != expectedResponse {
 					t.Errorf("Expected JSONP response %q, got %q", expectedResponse, actualResponse)

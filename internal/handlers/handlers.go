@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"myip/internal/ip"
 	"myip/internal/models"
@@ -40,15 +39,15 @@ func isJSONPFormat(format string) bool {
 
 // IPv4Handler handles requests for IPv4 addresses only
 // @Summary Get IPv4 address
-// @Description Returns the client's IPv4 address in plain text format, JSON format if format=json, or JSONP format if format=jsonp or callback query parameter is specified (case-insensitive)
+// @Description Returns the client's IPv4 address in plain text format, JSON format if format=json, or JSONP format if format=jsonp is specified (case-insensitive). Callback parameter only works with format=jsonp.
 // @Tags IP Detection
 // @Accept json
 // @Produce plain,json
 // @Param format query string false "Response format (json for JSON response, jsonp for JSONP response)"
-// @Param callback query string false "Callback function name for JSONP response (default: callback)"
+// @Param callback query string false "Callback function name for JSONP response. Only works with format=jsonp. Without format=jsonp, callback parameter is ignored and returns plain text (ipify.org compatible behavior). (default: callback)"
 // @Success 200 {string} string "IPv4 address (plain text)"
 // @Success 200 {object} map[string]string "IP address in JSON format: {\"ip\": \"192.168.1.1\"}"
-// @Success 200 {string} string "IP address in JSONP format: callback({\"ip\": \"192.168.1.1\"})"
+// @Success 200 {string} string "IP address in JSONP format: callback({\"ip\": \"192.168.1.1\"}) or getip({\"ip\": \"192.168.1.1\"}) with custom callback"
 // @Failure 404 {string} string "No IPv4 address found"
 // @Router / [get]
 func IPv4Handler(w http.ResponseWriter, r *http.Request) {
@@ -63,8 +62,8 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 	format := r.URL.Query().Get("format")
 	callback := r.URL.Query().Get("callback")
 
-	// Check if JSONP format is requested (case-insensitive, optimized) OR callback is provided
-	if isJSONPFormat(format) || (callback != "" && len(strings.TrimSpace(callback)) > 0) {
+	// Check if JSONP format is requested (case-insensitive, optimized)
+	if isJSONPFormat(format) {
 		if callback == "" {
 			callback = "callback"
 		}
@@ -94,15 +93,15 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 
 // IPv6Handler handles requests for IPv6 addresses only
 // @Summary Get IPv6 address
-// @Description Returns the client's IPv6 address in plain text format, JSON format if format=json, or JSONP format if format=jsonp or callback query parameter is specified (case-insensitive)
+// @Description Returns the client's IPv6 address in plain text format, JSON format if format=json, or JSONP format if format=jsonp is specified (case-insensitive). Callback parameter only works with format=jsonp.
 // @Tags IP Detection
 // @Accept json
 // @Produce plain,json
 // @Param format query string false "Response format (json for JSON response, jsonp for JSONP response)"
-// @Param callback query string false "Callback function name for JSONP response (default: callback)"
+// @Param callback query string false "Callback function name for JSONP response. Only works with format=jsonp. Without format=jsonp, callback parameter is ignored and returns plain text (ipify.org compatible behavior). (default: callback)"
 // @Success 200 {string} string "IPv6 address (plain text)"
 // @Success 200 {object} map[string]string "IP address in JSON format: {\"ip\": \"2001:db8::1\"}"
-// @Success 200 {string} string "IP address in JSONP format: callback({\"ip\": \"2001:db8::1\"})"
+// @Success 200 {string} string "IP address in JSONP format: callback({\"ip\": \"2001:db8::1\"}) or getip({\"ip\": \"2001:db8::1\"}) with custom callback"
 // @Failure 404 {string} string "No IPv6 address found"
 // @Router /ipv6 [get]
 func IPv6Handler(w http.ResponseWriter, r *http.Request) {
@@ -117,8 +116,8 @@ func IPv6Handler(w http.ResponseWriter, r *http.Request) {
 	format := r.URL.Query().Get("format")
 	callback := r.URL.Query().Get("callback")
 
-	// Check if JSONP format is requested (case-insensitive, optimized) OR callback is provided
-	if isJSONPFormat(format) || (callback != "" && len(strings.TrimSpace(callback)) > 0) {
+	// Check if JSONP format is requested (case-insensitive, optimized)
+	if isJSONPFormat(format) {
 		if callback == "" {
 			callback = "callback"
 		}
