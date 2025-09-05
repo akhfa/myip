@@ -1444,14 +1444,14 @@ func TestJSONPEdgeCases(t *testing.T) {
 			}
 
 			rr := httptest.NewRecorder()
-			
+
 			var handler http.HandlerFunc
 			if test.endpoint == "/ipv6" {
 				handler = IPv6Handler
 			} else {
 				handler = IPv4Handler
 			}
-			
+
 			handler.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != test.expectedCode {
@@ -1585,7 +1585,7 @@ func TestJSONPCallbackValidation(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := sanitizeCallback(test.callback)
 			if result != test.expectedCallback {
-				t.Errorf("sanitizeCallback(%q) = %q, expected %q: %s", 
+				t.Errorf("sanitizeCallback(%q) = %q, expected %q: %s",
 					test.callback, result, test.expectedCallback, test.description)
 			}
 		})
@@ -1649,14 +1649,14 @@ func TestJSONPWithDifferentIPTypes(t *testing.T) {
 			}
 
 			rr := httptest.NewRecorder()
-			
+
 			var handler http.HandlerFunc
 			if test.endpoint == "/ipv6" {
 				handler = IPv6Handler
 			} else {
 				handler = IPv4Handler
 			}
-			
+
 			handler.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != http.StatusOK {
@@ -1684,7 +1684,7 @@ func TestJSONPWithDifferentIPTypes(t *testing.T) {
 			start := strings.Index(response, "(")
 			end := strings.LastIndex(response, ");")
 			jsonPart := response[start+1 : end]
-			
+
 			var jsonObj map[string]string
 			err := json.Unmarshal([]byte(jsonPart), &jsonObj)
 			if err != nil {
