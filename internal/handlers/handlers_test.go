@@ -1249,7 +1249,7 @@ func TestJSONPSecurityValidation(t *testing.T) {
 		t.Run("IPv4_malicious_callback_"+callback, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/?format=jsonp&callback="+callback, nil)
 			req.Header.Set("CF-Connecting-IP", "203.0.113.1")
-			
+
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(IPv4Handler)
 			handler.ServeHTTP(rr, req)
@@ -1259,17 +1259,17 @@ func TestJSONPSecurityValidation(t *testing.T) {
 			}
 
 			response := rr.Body.String()
-			
+
 			// Response should use sanitized 'callback' instead of malicious input
 			if !strings.HasPrefix(response, "callback({") {
 				t.Errorf("Expected response to start with 'callback({', got: %s", response)
 			}
-			
+
 			// Response should not contain the malicious callback
 			if strings.Contains(response, callback) && callback != "callback" {
 				t.Errorf("Response contains unsanitized malicious callback: %s", response)
 			}
-			
+
 			// Response should be valid JSON wrapped in callback
 			expectedPattern := regexp.MustCompile(`^callback\(\{"ip":"203\.0\.113\.1"\}\);$`)
 			if !expectedPattern.MatchString(response) {
@@ -1294,7 +1294,7 @@ func TestJSONPProperEncoding(t *testing.T) {
 			ip:   "203.0.113.1",
 		},
 		{
-			name: "IPv6 address", 
+			name: "IPv6 address",
 			ip:   "2001:db8::1",
 		},
 	}
@@ -1303,13 +1303,13 @@ func TestJSONPProperEncoding(t *testing.T) {
 		t.Run("IPv4_encoding_"+test.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/?format=jsonp&callback=testCallback", nil)
 			req.Header.Set("CF-Connecting-IP", test.ip)
-			
+
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(IPv4Handler)
 			handler.ServeHTTP(rr, req)
 
 			response := rr.Body.String()
-			
+
 			// Extract JSON part from JSONP response
 			start := strings.Index(response, "(")
 			end := strings.LastIndex(response, ");")
@@ -1317,21 +1317,21 @@ func TestJSONPProperEncoding(t *testing.T) {
 				t.Errorf("Invalid JSONP format: %s", response)
 				return
 			}
-			
+
 			jsonPart := response[start+1 : end]
-			
+
 			// Verify JSON is valid
 			var jsonObj map[string]string
 			err := json.Unmarshal([]byte(jsonPart), &jsonObj)
 			if err != nil {
 				t.Errorf("Invalid JSON in JSONP response: %s, error: %v", jsonPart, err)
 			}
-			
+
 			// Verify the JSON response contains a valid IP field (IP detection may normalize)
 			if jsonObj["ip"] == "" {
 				t.Errorf("IP address field is empty in JSON response: %s", jsonPart)
 			}
-			
+
 			// Verify response uses sanitized callback
 			if !strings.HasPrefix(response, "testCallback(") {
 				t.Errorf("Expected response to start with 'testCallback(', got: %s", response)

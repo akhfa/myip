@@ -48,17 +48,17 @@ func sanitizeCallback(callback string) string {
 	if callback == "" {
 		return "callback"
 	}
-	
+
 	// Limit callback length to prevent abuse
 	if len(callback) > 50 {
 		return "callback"
 	}
-	
+
 	// Validate callback contains only safe JavaScript identifier characters
 	if !validCallbackRegex.MatchString(callback) {
 		return "callback"
 	}
-	
+
 	return callback
 }
 
@@ -90,9 +90,9 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 	// Check if JSONP format is requested (case-insensitive, optimized)
 	if isJSONPFormat(format) {
 		sanitizedCallback := sanitizeCallback(callback)
-		
+
 		w.Header().Set("Content-Type", "application/javascript")
-		
+
 		// Use proper JSON encoding to prevent injection attacks
 		response := map[string]string{"ip": ipv4}
 		jsonBytes, err := json.Marshal(response)
@@ -101,7 +101,7 @@ func IPv4Handler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to encode JSONP response", http.StatusInternalServerError)
 			return
 		}
-		
+
 		fmt.Fprintf(w, "%s(%s);", sanitizedCallback, string(jsonBytes))
 		return
 	}
@@ -152,9 +152,9 @@ func IPv6Handler(w http.ResponseWriter, r *http.Request) {
 	// Check if JSONP format is requested (case-insensitive, optimized)
 	if isJSONPFormat(format) {
 		sanitizedCallback := sanitizeCallback(callback)
-		
+
 		w.Header().Set("Content-Type", "application/javascript")
-		
+
 		// Use proper JSON encoding to prevent injection attacks
 		response := map[string]string{"ip": ipv6}
 		jsonBytes, err := json.Marshal(response)
@@ -163,7 +163,7 @@ func IPv6Handler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to encode JSONP response", http.StatusInternalServerError)
 			return
 		}
-		
+
 		fmt.Fprintf(w, "%s(%s);", sanitizedCallback, string(jsonBytes))
 		return
 	}
