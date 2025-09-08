@@ -54,10 +54,11 @@ The CI/CD pipeline consists of three main workflows that leverage Makefile comma
 - **External IP Comparison**: Compares results with `api.ipify.org` services
 - **Manual Trigger**: On-demand execution via GitHub Actions interface
 - **Strict Validation**: Zero tolerance for IP detection discrepancies
+- **End-to-End Testing**: Comprehensive endpoint comparison testing with `make e2e`
 
 ### GitHub Actions Integration
 
-The smoke test can be executed remotely via GitHub Actions using workflow dispatch:
+Both smoke tests and end-to-end tests can be executed remotely via GitHub Actions using workflow dispatch:
 
 1. **Navigate to Actions Tab**: Go to the repository's Actions tab
 2. **Select Smoke Test Workflow**: Click on "Smoke Test" workflow
@@ -208,6 +209,9 @@ make docker-test-build
 
 # Run security checks
 make security
+
+# Run end-to-end tests
+make e2e
 ```
 
 ### For Maintainers

@@ -207,6 +207,8 @@ make run         # Run the application
 make dev         # Run with hot reload (requires air)
 make test        # Run tests
 make test-cover  # Run tests with coverage
+make smoke-test  # Run smoke tests (deployment validation)
+make e2e         # Run end-to-end endpoint comparison tests
 make check       # Run all code quality checks
 make deps        # Download and verify dependencies
 ```
@@ -240,6 +242,17 @@ make smoke-test
 go test -run TestSmokeTest -v ./test
 ```
 
+#### End-to-End Tests
+Comprehensive end-to-end tests that first validate the deployment via smoke tests, then perform endpoint comparison testing:
+
+```bash
+# Run end-to-end tests (includes smoke test + endpoint comparison)
+make e2e
+
+# Alternative direct command
+go test -run TestEndpointComparison -v ./test
+```
+
 **Smoke Test Validation:**
 - ✅ **IPv4 Detection Accuracy**: Compares your public IPv4 from `api.ipify.org` with deployment detection
 - ✅ **IPv6 Detection Accuracy**: Compares your public IPv6 from `api64.ipify.org` with deployment detection (if available)  
@@ -263,7 +276,12 @@ The smoke test performs **strict accuracy validation** against the actual produc
 
 This focused approach ensures the deployed service **exactly matches** external IP detection services with zero tolerance for differences.
 
-**Remote Testing**: Smoke tests can also be executed via GitHub Actions workflow dispatch. For details on remote testing and CI/CD integration, see [docs/CICD.md](docs/CICD.md).
+**End-to-End Test Coverage:**
+- ✅ **Phase 0**: Deployment validation via smoke test
+- ✅ **Phase 1**: Comparative endpoint testing (ip.2ak.me vs api.ipify.org)
+- ✅ **Phase 2**: Individual feature testing for all supported formats
+
+**Remote Testing**: Both smoke tests and end-to-end tests can be executed via GitHub Actions workflow dispatch. For details on remote testing and CI/CD integration, see [docs/CICD.md](docs/CICD.md).
 
 
 ## CI/CD Pipeline
