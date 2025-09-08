@@ -4,11 +4,30 @@ This document describes the comprehensive CI/CD pipeline setup for the My IP Go 
 
 ## Overview
 
-The CI/CD pipeline consists of three main workflows:
+The CI/CD pipeline consists of three main workflows that leverage Makefile commands for consistency:
 
 1. **Pull Request Workflow** (`.github/workflows/pr.yml`) - Runs on PR creation/updates
 2. **Release Workflow** (`.github/workflows/release.yml`) - Runs on pushes to master/main and tags
 3. **Smoke Test Workflow** (`.github/workflows/smoke-test.yml`) - Manual deployment validation
+
+### Pipeline Features
+
+- 🔧 **Makefile Integration**: All steps use standardized `make` commands for consistency
+- 📚 **Swagger Generation**: Automatically generates API documentation via `make build`
+- ✅ Comprehensive testing with `make test-coverage-ci` (race detection included)
+- 🔍 Static analysis with `make staticcheck` and `make lint`
+- 🏗️ Application build with `make build` (includes swagger docs)
+- 🐳 Docker image build validation with `make docker-test-build`
+- 📊 Code coverage reporting with Codecov integration
+- ⚙️ Consistent CI setup with `make ci-setup`
+- 🚀 **Snapshot builds** on pushes to `main` branch (Docker images only)
+- 🎯 **Tagged releases** with full publishing pipeline
+- 🐳 Optimized Docker images (amd64, arm64) on GHCR
+- 📦 Package generation (deb, rpm, apk)
+- 🔐 Artifact signing with Cosign
+- 🛡️ Security scanning with `make security-sarif` and Trivy
+- 📋 SBOM (Software Bill of Materials) generation
+- 🔄 Automatic package manager publishing
 
 ## Workflow Details
 
@@ -35,6 +54,25 @@ The CI/CD pipeline consists of three main workflows:
 - **External IP Comparison**: Compares results with `api.ipify.org` services
 - **Manual Trigger**: On-demand execution via GitHub Actions interface
 - **Strict Validation**: Zero tolerance for IP detection discrepancies
+
+### GitHub Actions Integration
+
+The smoke test can be executed remotely via GitHub Actions using workflow dispatch:
+
+1. **Navigate to Actions Tab**: Go to the repository's Actions tab
+2. **Select Smoke Test Workflow**: Click on "Smoke Test" workflow
+3. **Run Workflow**: Click "Run workflow" button
+4. **Add Description** (optional): Provide a description for the test run
+5. **View Results**: Monitor the workflow execution and view detailed logs
+
+**Workflow Features:**
+- ✅ **Manual Trigger**: On-demand execution via workflow dispatch
+- ✅ **Timeout Protection**: 10-minute maximum execution time  
+- ✅ **Detailed Logging**: Comprehensive test output and summaries
+- ✅ **Status Reporting**: Clear pass/fail indicators with error notifications
+- ✅ **Environment Info**: Shows test description, target URL, and timing
+
+This allows remote validation of the deployment without requiring local setup.
 
 ### Pull Request Workflow (continued)
 

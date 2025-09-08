@@ -201,35 +201,17 @@ make run
 ### Available Make Commands
 
 ```bash
-make help               # Show all available commands
-make swagger            # Generate Swagger documentation
-make build              # Build the application (includes swagger)
-make run                # Run the application
-make dev                # Run with hot reload (requires air)
-make test               # Run tests
-make test-race          # Run tests with race detector
-make test-cover         # Run tests with coverage
-make test-coverage-ci   # Run tests with coverage for CI (with race detector)
-make bench              # Run benchmarks
-make smoke-test         # Run comprehensive smoke tests (manual trigger)
-make fmt                # Format code
-make vet                # Run go vet
-make lint               # Run golint
-make staticcheck        # Run staticcheck
-make check              # Run all code quality checks
-make build-all          # Build for all platforms
-make docker-build       # Build Docker image
-make docker-test-build  # Build Docker image for testing (no push)
-make docker-run         # Run Docker container
-make clean              # Clean build artifacts
-make deps               # Download and verify dependencies
-make tidy               # Tidy dependencies
-make install            # Install the application
-make security           # Run security checks
-make security-sarif     # Run security checks with SARIF output
-make ci-setup           # Setup CI environment (install tools)
-make ci-test            # Run CI tests (deps, swagger, vet, staticcheck, test-race)
+make help        # Show all available commands
+make build       # Build the application (includes swagger)
+make run         # Run the application
+make dev         # Run with hot reload (requires air)
+make test        # Run tests
+make test-cover  # Run tests with coverage
+make check       # Run all code quality checks
+make deps        # Download and verify dependencies
 ```
+
+For the complete list of available commands including CI/CD targets, see [docs/CICD.md](docs/CICD.md).
 
 ### Testing
 
@@ -256,9 +238,6 @@ make smoke-test
 
 # Alternative direct command
 go test -run TestSmokeTest -v ./test
-
-# Run via GitHub Actions (manual workflow dispatch)
-# Go to Actions tab → Smoke Test → Run workflow
 ```
 
 **Smoke Test Validation:**
@@ -284,61 +263,12 @@ The smoke test performs **strict accuracy validation** against the actual produc
 
 This focused approach ensures the deployed service **exactly matches** external IP detection services with zero tolerance for differences.
 
-### GitHub Actions Integration
+**Remote Testing**: Smoke tests can also be executed via GitHub Actions workflow dispatch. For details on remote testing and CI/CD integration, see [docs/CICD.md](docs/CICD.md).
 
-The smoke test can be executed remotely via GitHub Actions using workflow dispatch:
-
-1. **Navigate to Actions Tab**: Go to the repository's Actions tab
-2. **Select Smoke Test Workflow**: Click on "Smoke Test" workflow
-3. **Run Workflow**: Click "Run workflow" button
-4. **Add Description** (optional): Provide a description for the test run
-5. **View Results**: Monitor the workflow execution and view detailed logs
-
-**Workflow Features:**
-- ✅ **Manual Trigger**: On-demand execution via workflow dispatch
-- ✅ **Timeout Protection**: 10-minute maximum execution time  
-- ✅ **Detailed Logging**: Comprehensive test output and summaries
-- ✅ **Status Reporting**: Clear pass/fail indicators with error notifications
-- ✅ **Environment Info**: Shows test description, target URL, and timing
-
-This allows remote validation of the deployment without requiring local setup.
 
 ## CI/CD Pipeline
 
-This project features a comprehensive CI/CD pipeline with two main workflows:
-
-### Pull Request Workflow
-- 🔧 **Makefile Integration**: All steps use standardized `make` commands for consistency
-- 📚 **Swagger Generation**: Automatically generates API documentation via `make build`
-- ✅ Comprehensive testing with `make test-coverage-ci` (race detection included)
-- 🔍 Static analysis with `make staticcheck` and `make lint`
-- 🏗️ Application build with `make build` (includes swagger docs)
-- 🐳 Docker image build validation with `make docker-test-build`
-- 📊 Code coverage reporting with Codecov integration
-- ⚙️ Consistent CI setup with `make ci-setup`
-
-### Release Workflow
-- 🔧 **Makefile Integration**: Uses `make` commands for consistent testing and security
-- 🚀 **Snapshot builds** on pushes to `main` branch (Docker images only)
-- 🎯 **Tagged releases** with full publishing pipeline
-- 📚 **Swagger Documentation**: Generated automatically via `make build`
-- 🐳 Optimized Docker images (amd64, arm64) on GHCR
-- 📦 Package generation (deb, rpm, apk)
-- 🔐 Artifact signing with Cosign
-- 🛡️ Security scanning with `make security-sarif` and Trivy
-- 📋 SBOM (Software Bill of Materials) generation
-- 🔄 Automatic package manager publishing
-
-### Supported Package Managers
-- 🐧 **APT/YUM/APK** (Linux distributions - deb/rpm/apk packages)
-
-### Container Registry
-All Docker images are published to GitHub Container Registry (GHCR):
-- `main` and `latest` tags for main branch builds
-- `v*` tags for release builds
-- `commit-<sha>` tags for specific commits
-
-For detailed CI/CD documentation, see [docs/CICD.md](docs/CICD.md).
+This project features a comprehensive CI/CD pipeline with automated testing, security scanning, multi-architecture builds, and package publishing. For complete CI/CD documentation, workflows, and configuration details, see [docs/CICD.md](docs/CICD.md).
 
 ## Security & Verification
 
