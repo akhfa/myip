@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"myip/internal/models"
+	"myip/pkg/models"
 )
 
 const (

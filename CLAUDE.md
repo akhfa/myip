@@ -13,7 +13,7 @@ The application follows Go best practices with a clean package structure:
 ```
 myip/
 ├── main.go                    # Application entry point and routing
-├── internal/                  # Private application packages
+├── pkg/                       # Public application packages (importable)
 │   ├── config/               # Configuration management
 │   │   └── config.go         # Environment variable handling
 │   ├── handlers/             # HTTP request handlers
@@ -32,7 +32,7 @@ myip/
 
 ### Core Components
 
-1. **HTTP Handlers** (`internal/handlers`): The service implements specialized handlers for different use cases:
+1. **HTTP Handlers** (`pkg/handlers`): The service implements specialized handlers for different use cases:
    - `IPv4Handler`: Returns IPv4 addresses only
    - `IPv6Handler`: Returns IPv6 addresses only (404 if unavailable)
    - `InfoHandler`: Provides detailed IP information in plain text
@@ -41,7 +41,7 @@ myip/
    - `HealthHandler`: Health check endpoint
    - **Swagger Documentation**: Interactive API documentation endpoint at `/swagger/`
 
-2. **IP Detection Logic** (`internal/ip`): Sophisticated IP extraction with header priority:
+2. **IP Detection Logic** (`pkg/ip`): Sophisticated IP extraction with header priority:
    - `CF-Connecting-IP` (Cloudflare - highest priority)
    - `True-Client-IP` (Cloudflare Enterprise)
    - `X-Real-IP` (nginx proxy/FastCGI)
@@ -51,11 +51,11 @@ myip/
    - Less common headers: `X-Forwarded`, `Forwarded-For`, `Forwarded`
    - Falls back to `RemoteAddr` if no headers present
 
-3. **Data Models** (`internal/models`):
+3. **Data Models** (`pkg/models`):
    - `IPInfo`: Comprehensive IP information structure
    - `HealthResponse`: Health check response format
 
-4. **Configuration** (`internal/config`):
+4. **Configuration** (`pkg/config`):
    - Environment variable management
    - Application configuration loading
 
@@ -88,7 +88,7 @@ The codebase demonstrates excellent testing practices:
 - **Well-documented functions**: Clear responsibilities and interfaces
 - **Robust error handling**: Consistent error patterns throughout
 - **Type safety**: Proper struct definitions with Go best practices
-- **Internal packages**: Uses Go's internal package pattern to prevent external imports
+- **Public packages**: Uses pkg/ directory pattern to allow external imports as dependencies
 - **Go fmt**: Always run go fmt after creating or modifying .go files
 
 ## CI/CD Integration

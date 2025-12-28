@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"myip/internal/models"
+	"myip/pkg/models"
 )
 
 func TestIPv4Handler(t *testing.T) {

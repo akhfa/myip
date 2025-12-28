@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"regexp"
 
-	"myip/internal/ip"
-	"myip/internal/models"
+	"myip/pkg/ip"
+	"myip/pkg/models"
 )
 
 // isJSONFormat checks if format parameter equals "json" case-insensitively

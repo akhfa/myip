@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"myip/internal/config"
-	"myip/internal/handlers"
+	"myip/pkg/config"
+	"myip/pkg/handlers"
 )
 
 // Integration tests for the main application endpoints

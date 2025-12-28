@@ -7,8 +7,8 @@ import (
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"myip/docs"
-	"myip/internal/config"
-	"myip/internal/handlers"
+	"myip/pkg/config"
+	"myip/pkg/handlers"
 )
 
 // @title MyIP API

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"myip/internal/models"
+	"myip/pkg/models"
 )
 
 // GetInfo gets comprehensive IP information
