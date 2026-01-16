@@ -94,6 +94,12 @@ smoke-test:
 	@echo "Running comprehensive smoke tests..."
 	go test -run TestSmokeTest -v ./test
 
+## e2e: Run end-to-end endpoint comparison tests
+.PHONY: e2e
+e2e:
+	@echo "Running end-to-end endpoint comparison tests..."
+	go test -run TestEndpointComparison -v ./test
+
 ##@ Code Quality
 
 ## fmt: Format code

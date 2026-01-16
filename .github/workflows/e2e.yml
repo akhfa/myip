@@ -1,0 +1,61 @@
+name: End-to-End Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Run End-to-End Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download dependencies
+        run: make deps
+
+      - name: Run end-to-end tests
+        id: e2e-test
+        run: |
+          echo "Running end-to-end endpoint comparison tests..."
+          echo "Comparing local endpoints with external services"
+          echo "Started at: $(date)"
+          echo ""
+
+          # Run the e2e test using make command
+          make e2e
+
+      - name: Test Results Summary
+        if: always()
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # End-to-End Test Summary
+
+          - **Workflow:** ${{ github.workflow }}
+          - **Run ID:** ${{ github.run_id }}
+          - **Triggered by:** ${{ github.actor }}
+          - **Completed at:** $(date)
+
+          EOF
+
+          if [ "${{ steps.e2e-test.outcome }}" == "success" ]; then
+            cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## ✅ E2E TESTS PASSED
+
+          All endpoint comparisons successful. IP detection is working correctly across all endpoints.
+          EOF
+          else
+            cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## ❌ E2E TESTS FAILED
+
+          Endpoint comparison failed. Check logs above for details on which endpoints had issues.
+          EOF
+          fi
